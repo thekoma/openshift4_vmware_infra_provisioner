@@ -1,5 +1,19 @@
 ---
-- name: Query a file on a datastore
+
+
+- name: Install Ansible's vmware_guest required libraryes
+  yum:
+    name: 
+      - python3-requests
+      - python3-pip
+    state: present
+
+- name: Install python non rpm packages
+  pip:
+    name: 
+      - PyVmomi
+
+- name: Create Directory in Datastore
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -7,20 +21,31 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"      
-    path: "{{ hosts_defaults.iso }}"
-    state: absent
+    path: "{{ vcenter.storage }}"
+    state: directory
+  delegate_to: localhost
+  ignore_errors: yes
+
+- name: "Query a ipxe iso file on a datastore {{ vcenter.storage }}/{{ hosts_defaults.iso }}"
+  vsphere_file:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    datastore:  "{{ vcenter.datastore }}"      
+    path: "{{ vcenter.storage }}/{{ hosts_defaults.iso }}"
+    state: file
   delegate_to: localhost
   ignore_errors: yes
   register: ipxe_inuse
 
-- name: debug
-  when: ipxe_inuse.failed
+- name: Print the var
   debug:
-    msg: "WARNING: I Cannot refresh the IPXE image because is in use. I will skip this step."
-
+    msg: "{{ ipxe_inuse }}"
 
 - name: Copy file to datastore using delegate_to
-  when: not ipxe_inuse.failed
+  when: ipxe_inuse.state == 'absent'
   vsphere_copy:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -29,7 +54,7 @@
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"
     src: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
-    path: "{{ hosts_defaults.iso }}"
+    path: "{{ vcenter.storage }}/{{ hosts_defaults.iso }}"
   delegate_to: localhost
 
 - name: Create a virtual machine from a template
@@ -41,7 +66,7 @@
     password: "{{ vcenter.password }}"
     validate_certs: "{{ vcenter.validate_certs }}"
     folder: "{{ vcenter.folder }}"
-    name: "{{ item.hostname }}"
+    name: "{{ item.vmname | default(item.hostname) }}"
     state: poweredon
     datacenter: "{{ vcenter.datacenter }}"
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
@@ -58,7 +83,7 @@
       memory_reservation_lock: "{{ item.memory_reservation_lock | default(hosts_defaults[item.type]['memory_reservation_lock']) }}"
     cdrom:
       type: iso
-      iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + hosts_defaults.iso) }}"
+      iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + vcenter.storage + '/' + hosts_defaults.iso) }}"
     customvalues:
       - key: guestinfo.ipxe.hostname
         value: "{{ item.hostname }}"
@@ -85,6 +110,12 @@
       - key: guestinfo.ipxe.net_interface
         value: "ens192"
       - key: disk.EnableUUID
+        value: "TRUE"
+      - key: annotation
+        value: "{{ item.annotation | default('Openshift node ' + item.type) }}"
+      - key: sched.cpu.latencySensitivity
+        value: "high"
+      - key: vhv.enable
         value: "TRUE"
     networks:
     - name: "{{ item.network.name |  default(hosts_defaults['network']['name']) }}"

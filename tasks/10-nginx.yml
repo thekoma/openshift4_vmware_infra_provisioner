@@ -14,8 +14,6 @@
       immediate: yes
 
 - name: Change Nginx Listen Port
-  notify:
-    - restart nginx in task
   lineinfile:
     path: "{{ item.file }}"
     regexp: "{{ item.regexp }}"

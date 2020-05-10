@@ -10,7 +10,7 @@
 
 - name: Prepare HaProxy
   when: 
-    - ocp_vm_clanup
+    - not ocp_vm_clanup
     - ocp_vm_create_haproxy
   tags: 
    - web
