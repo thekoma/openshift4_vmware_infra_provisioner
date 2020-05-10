@@ -1,0 +1,4 @@
+- name: To connect export this variables
+  debug:
+    msg:
+      - "{{lookup('file', 'README.txt')}}"

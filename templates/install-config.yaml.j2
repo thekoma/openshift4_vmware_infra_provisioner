@@ -1,0 +1,22 @@
+apiVersion: v1
+baseDomain: {{ ocp_installer.basedomain }}
+compute:
+  - hyperthreading: Enabled   
+    name: worker
+    replicas: {{ vm_hosts | selectattr("type", "equalto", "worker") | list | count }}
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: {{ vm_hosts | selectattr("type", "equalto", "master") | list | count }}
+metadata:
+  name: {{ ocp_installer.clustername }} 
+platform:
+  vsphere:
+    vcenter: {{ vcenter.host }}
+    username: {{ vcenter.user }} 
+    password: {{ vcenter.password }} 
+    datacenter: {{ vcenter.datacenter }} 
+    defaultDatastore: {{ vcenter.datastore }} 
+fips: false 
+pullSecret: '{{ ocp_installer.pullsecret }}' 
+sshKey: '{{ ocp_installer.sshkey }}' 

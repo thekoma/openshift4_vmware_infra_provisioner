@@ -1,0 +1,71 @@
+global
+        daemon
+        maxconn 4000
+    defaults
+        mode tcp
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+    frontend stats
+        mode http
+        bind *:9000
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats auth admin:ocp
+        
+    frontend machineconfig
+        bind *:22623
+        mode tcp
+        default_backend machineconfig_backend
+    backend machineconfig_backend
+        mode tcp
+{% for node in vm_hosts | selectattr("type", "equalto", "bootstrap") | list  %}
+        server {{node.hostname}} {{node.network.ip}}:22623 maxconn 250 check
+{% endfor %}
+{% for node in vm_hosts | selectattr("type", "equalto", "master") | list  %}
+        server {{node.hostname}} {{node.network.ip}}:22623 maxconn 250 check
+{% endfor %}
+
+    frontend api
+        bind *:6443
+        mode tcp
+        default_backend api_backend
+    backend api_backend
+        mode tcp
+{% for node in vm_hosts | selectattr("type", "equalto", "bootstrap") | list  %}
+        server {{node.hostname}} {{node.network.ip}}:6443 maxconn 250 check
+{% endfor %}
+{% for node in vm_hosts | selectattr("type", "equalto", "master") | list  %}
+        server {{node.hostname}} {{node.network.ip}}:6443 maxconn 250 check
+{% endfor %}
+
+    frontend http_infra
+        bind *:80
+        mode http
+        default_backend http_infra_backend
+    backend http_infra_backend
+        mode http
+{% for node in vm_hosts | selectattr("type", "equalto", "worker") | list  %}
+        server {{node.hostname}} {{node.network.ip}}:80 maxconn 250 check
+{% endfor %}
+
+    frontend https_infra
+        bind *:443
+        mode tcp
+        default_backend https_infra_backend
+    backend https_infra_backend
+        mode tcp
+{% for node in vm_hosts | selectattr("type", "equalto", "worker") | list  %}
+        server {{node.hostname}} {{node.network.ip}}:443 maxconn 250 check
+{% endfor %}
+    
+    # Not used as backend but just to enumerate it
+    backend etcd
+        mode tcp
+{% for node in vm_hosts | selectattr("type", "equalto", "bootstrap") | list  %}
+        server bootstrap.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}} {{node.network.ip}}:2380 maxconn 250 check
+{% endfor %}
+{% for node in vm_hosts | selectattr("type", "equalto", "master") | list  %}
+        server etcd-{{loop.index - 1 }}.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}} {{node.network.ip}}:2380 maxconn 250 check
+{% endfor %}

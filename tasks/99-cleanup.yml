@@ -1,0 +1,37 @@
+- name: Delete Machines
+  tags: vm
+  loop: "{{ vm_hosts }}"
+  vmware_guest:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    folder: "{{ vcenter.folder }}"
+    name: "{{ item.hostname }}"
+    state: "absent" 
+    force: true
+  delegate_to: localhost
+  register: deploy
+
+
+- name: Query a file on a datastore
+  vsphere_file:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    datastore:  "{{ vcenter.datastore }}"      
+    path: "{{ hosts_defaults.iso }}"
+    state: absent
+  delegate_to: localhost
+  ignore_errors: yes
+  register: ipxe_inuse
+
+- name: Create ipxe config path
+  loop:
+    - "{{playbook_dir}}/tmp"
+  file:
+    path: "{{ item }}"
+    state: absent
+    force: yes

@@ -1,0 +1,73 @@
+---
+- name: Install Needed Packages
+  yum:
+    state: present
+    name:
+      - tcpdump
+      - git
+      - xz-devel
+      - wget
+      - genisoimage 
+      - mkisofs
+      - syslinux
+      - "@Development tools"
+      - coreutils
+
+- name: "Check if {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso exist"
+  stat: 
+    path: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+  register: ipxe_iso
+
+- name: Create rhcos_ipxe.iso
+  when: 
+   - not ipxe_iso.stat.exists
+  block: 
+    - name: Create tempdir
+      file:
+        path: "{{playbook_dir}}/tmp/src/ipxe"
+        state: directory
+        recurse: yes
+
+    - name: Fetch ipxe source code
+      git:
+        repo: https://github.com/ipxe/ipxe/
+        dest: "{{playbook_dir}}/tmp/src/ipxe"
+        force: yes
+
+
+    - name: Ensure VMWARE_SETTINGS are enabled
+      lineinfile:
+        path: "{{playbook_dir}}/tmp/src/ipxe/src/config/settings.h"
+        regexp: '^#define	VMWARE_SETTINGS'
+        line: '#define	VMWARE_SETTINGS'
+        insertafter: '.*PCI_SETTINGS.*'
+
+    - name: Create ipxe config path
+      file:
+        path: "{{playbook_dir}}/tmp/iso"
+        state: directory
+
+    - name: Generate ipxe script from template
+      template:
+        src: vmware.ipxe
+        dest: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
+
+
+    - name: Cleanup ipxe
+      make:
+        chdir: "{{playbook_dir}}/tmp/src/ipxe/src/"
+        target: clean
+
+    - name: Build '{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso' target with extra arguments
+      make:
+        chdir: "{{playbook_dir}}/tmp/src/ipxe/src/"
+        target: bin/ipxe.iso
+        params:
+          NUM_THREADS: "{{ansible_processor_count}}"
+          EMBED: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
+
+    - name: "Copy produced ipxe iso in {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+      copy:
+        src: "{{playbook_dir}}/tmp/src/ipxe/src/bin/ipxe.iso"
+        dest: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+

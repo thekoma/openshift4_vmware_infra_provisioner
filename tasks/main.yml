@@ -1,0 +1,54 @@
+---
+- name: Prepare WebServer
+  when: 
+    - ocp_vm_clanup != 'yes'
+    - ocp_vm_create_webserver == 'yes'
+  tags: 
+   - web
+   - nginx
+  include_tasks: 10-nginx.yml
+
+- name: Prepare HaProxy
+  when: 
+    - ocp_vm_clanup != 'yes'
+    - ocp_vm_create_haproxy == 'yes'
+  tags: 
+   - web
+   - haproxy
+  include_tasks: 20-haproxy.yml
+
+
+- name: Create PXE Image
+  when: 
+    - ocp_vm_clanup != 'yes'
+    - ocp_vm_create_ipxe == 'yes'
+  tags: 
+    - pxe
+    - ipxe
+    - iso
+  include_tasks: 30-pxe.yml
+
+- name: prepare installer
+  when: ocp_vm_clanup != 'yes'
+  tags: 
+    - installer
+  include_tasks: 40-installer.yml
+
+- name: Create VMS
+  when: ocp_vm_clanup != 'yes'
+  tags: 
+    - vms
+  include_tasks: 50-vms.yml
+
+- name: Install Client
+  when: ocp_vm_clanup != 'yes'
+  tags: 
+    - kubectl
+    - oc
+  include_tasks: 60-client.yml
+
+- name: Debug Messages
+  when: ocp_vm_clanup == 'yes'
+  tags: 
+    - debug
+  include_tasks: 99-cleanup.yml

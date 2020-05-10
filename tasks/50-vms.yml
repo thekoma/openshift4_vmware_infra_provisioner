@@ -1,0 +1,92 @@
+---
+- name: Query a file on a datastore
+  vsphere_file:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    datastore:  "{{ vcenter.datastore }}"      
+    path: "{{ hosts_defaults.iso }}"
+    state: absent
+  delegate_to: localhost
+  ignore_errors: yes
+  register: ipxe_inuse
+
+- name: debug
+  when: ipxe_inuse.failed
+  debug:
+    msg: "WARNING: I Cannot refresh the IPXE image because is in use. I will skip this step."
+
+
+- name: Copy file to datastore using delegate_to
+  when: not ipxe_inuse.failed
+  vsphere_copy:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    datastore:  "{{ vcenter.datastore }}"
+    src: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+    path: "{{ hosts_defaults.iso }}"
+  delegate_to: localhost
+
+- name: Create a virtual machine from a template
+  tags: vm
+  loop: "{{ vm_hosts }}"
+  vmware_guest:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    folder: "{{ vcenter.folder }}"
+    name: "{{ item.hostname }}"
+    state: poweredon
+    datacenter: "{{ vcenter.datacenter }}"
+    guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
+    disk:
+    - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
+      type: thin
+      datastore:  "{{ vcenter.datastore }}"
+    hardware:
+      memory_mb: "{{ item.memory_mb | default(hosts_defaults[item.type]['memory_mb']) }}"
+      num_cpus: "{{ item.num_cpus | default(hosts_defaults[item.type]['num_cpus']) }}"
+      num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']) }}"
+      mem_limit: "{{ item.mem_limit | default(hosts_defaults[item.type]['mem_limit']) }}"
+      mem_reservation: "{{ item.mem_reservation | default(hosts_defaults[item.type]['mem_reservation']) }}"
+      memory_reservation_lock: "{{ item.memory_reservation_lock | default(hosts_defaults[item.type]['memory_reservation_lock']) }}"
+    cdrom:
+      type: iso
+      iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + hosts_defaults.iso) }}"
+    customvalues:
+      - key: guestinfo.ipxe.hostname
+        value: "{{ item.hostname }}"
+      - key: guestinfo.ipxe.ignition
+        value: "{{ item.ignition | default(hosts_defaults[item.type]['ignition']) }}"
+      - key: guestinfo.ipxe.net0.ip
+        value: "{{ item.network.ip }}"
+      - key: guestinfo.ipxe.net0.netmask
+        value: "{{ item.network.mask |  default(hosts_defaults['network']['mask']) }}"
+      - key: guestinfo.ipxe.net0.gateway
+        value: "{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}"
+      - key: guestinfo.ipxe.fileserver
+        value: "http://{{ hostvars['localhost']['ansible_fqdn'] }}:8080"
+      - key: guestinfo.ipxe.dns
+        value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) }}"
+      - key: guestinfo.ipxe.kernel-installer
+        value: "kernel"
+      - key: guestinfo.ipxe.initrd-installer
+        value: "initramfs.img"
+      - key: guestinfo.ipxe.rhcos-image
+        value: "rhcos.raw.gz"
+      - key: guestinfo.ipxe.disk
+        value: "sda"
+      - key: guestinfo.ipxe.net_interface
+        value: "ens192"
+      - key: disk.EnableUUID
+        value: "TRUE"
+    networks:
+    - name: "{{ item.network.name |  default(hosts_defaults['network']['name']) }}"
+  delegate_to: localhost
+  register: deploy

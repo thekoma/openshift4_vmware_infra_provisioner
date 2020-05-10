@@ -1,0 +1,53 @@
+- name: Install Needed Packages
+  yum:
+    state: present
+    name:
+     - nginx
+
+- name: enable Ports on firewall
+  loop:
+      - 8080/tcp
+  firewalld:
+      port: "{{ item }}"
+      permanent: yes
+      state: enabled
+      immediate: yes
+
+- name: Change Nginx Listen Port
+  notify:
+    - restart nginx in task
+  lineinfile:
+    path: "{{ item.file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'listen       80 default_server;'
+      line: '        listen       8080 default_server;'
+      file: '/etc/nginx/nginx.conf'
+    - regexp: 'listen       \[::\]:80 default_server;'
+      line: '        listen       [::]:8080 default_server;'
+      file: '/etc/nginx/nginx.conf'
+    - regexp: 'listen       80;'
+      line: '        listen       8080;'
+      file: '/etc/nginx/nginx.conf.default'
+
+- name: enable nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: Download bootstrap kernel for RHCOS netinstall
+  get_url:
+    url: "{{ ocp_installer.kernel }}"
+    dest: /usr/share/nginx/html/kernel
+
+- name: Download bootstrap initrd for RHCOS netinstall
+  get_url:
+    url: "{{ ocp_installer.initrd }}"
+    dest: /usr/share/nginx/html/initramfs.img
+
+- name: Download RHCOS image  netinstall
+  get_url:
+    url: "{{ ocp_installer.rhcosimage }}"
+    dest: /usr/share/nginx/html/rhcos.raw.gz
