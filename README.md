@@ -3,10 +3,39 @@ Openshift 4 vmware infra provisioner
 
 This Role provides the simplest way to install openshift 4 taking care of all the network configuration but DNS.
 
+Features:
+------------
+- check for yout environment
+- Validate your configuration
+- Validate your DNS
+- Configure an HaProxy (not deploy it, only configure ATM)
+- Configure an Nginx web server (not deploy it, only configure ATM)
+- Build the iPXE iso image
+- Create the VM
+- Boot the vm injecting network configuration
+- Install the cluster
+
+TODO:
+------------
+- ~~Check for yout environment~~
+- ~~Validate your configuration~~
+- ~~Validate your DNS~~
+- ~~Configure an HaProxy (not deploy it, only configure ATM)~~
+- ~~Configure an Nginx web server (not deploy it, only configure ATM)~~
+- ~~Build the iPXE iso image~~
+- ~~Create the VM~~
+- ~~Boot the vm injecting network configuration~~
+- ~~Install the cluster~~
+- Validate minimal requirements
+- Deploy VM for HaProxy and NginX
+- Build HA/Vrrp for HaProxy/NginX
+
 Requirements
 ------------
 
 A Bastion node where execute thos tasks and where install a temporary webserver
+Rhel/Centos 8
+Ansible 2.9
 
 Role Variables
 --------------
