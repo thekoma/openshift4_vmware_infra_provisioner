@@ -1,6 +1,6 @@
 ---
 
-ocp_vm_clanup: no
+ocp_vm_cleanup: no
 ocp_vm_create_webserver: yes
 ocp_vm_create_haproxy: yes
 ocp_vm_create_ipxe: yes

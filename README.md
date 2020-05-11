@@ -14,7 +14,7 @@ Role Variables
 ```yaml
 ---
 
-ocp_vm_clanup: no             # Set it to True to cleanup the environment
+ocp_vm_cleanup: no             # Set it to True to cleanup the environment
 ocp_vm_create_webserver: yes  # Enable the creation of the webserver.
 ocp_vm_create_haproxy: yes
 ocp_vm_create_ipxe: yes

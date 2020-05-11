@@ -81,6 +81,7 @@
       mem_limit: "{{ item.mem_limit | default(hosts_defaults[item.type]['mem_limit']) }}"
       mem_reservation: "{{ item.mem_reservation | default(hosts_defaults[item.type]['mem_reservation']) }}"
       memory_reservation_lock: "{{ item.memory_reservation_lock | default(hosts_defaults[item.type]['memory_reservation_lock']) }}"
+      cpu_reservation: "{{ vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket'])) }}"
     cdrom:
       type: iso
       iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + vcenter.storage + '/' + hosts_defaults.iso) }}"
@@ -114,7 +115,7 @@
       - key: annotation
         value: "{{ item.annotation | default('Openshift node ' + item.type) }}"
       - key: sched.cpu.latencySensitivity
-        value: "high"
+        value: "{{ item.latencysensitivity |  default(hosts_defaults.latencysensitivity) }}"
       - key: vhv.enable
         value: "TRUE"
     networks:

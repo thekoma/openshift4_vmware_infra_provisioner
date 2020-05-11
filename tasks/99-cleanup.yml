@@ -7,7 +7,7 @@
     password: "{{ vcenter.password }}"
     validate_certs: "{{ vcenter.validate_certs }}"
     folder: "{{ vcenter.folder }}"
-    name: "{{ item.hostname }}"
+    name: "{{ item.vmname | default(item.hostname) }}"
     state: "absent" 
     force: true
   delegate_to: localhost
