@@ -19,7 +19,8 @@ echo defaults/main.yml
 Dependencies
 ------------
 
-Tested on RHEL8
+Tested on RHEL8 and Centos8
+Tested with Ansible 2.9
 
 Example Playbook
 ----------------
