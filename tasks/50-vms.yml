@@ -98,14 +98,14 @@
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
     disk:
       - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
-        type: thin
+        type: "{{ item.disktype | default(hosts_defaults[item.type]['disktype'])| default('thin') }}"
         datastore:  "{{ vcenter.datastore }}"
     hardware:
       nested_virt: "{{ item.nested_virt | default(hosts_defaults[item.type]['nested_virt']) }}"
       memory_mb: "{{ item.memory_mb | default(hosts_defaults[item.type]['memory_mb']) }}"
       num_cpus: "{{ item.num_cpus | default(hosts_defaults[item.type]['num_cpus']) }}"
       num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']) }}"
-      mem_reservation: "{{ '0' if not enable_reservation else (item.mem_limit | default(hosts_defaults[item.type]['mem_limit'])) }}"
+      mem_reservation: "{{ '0' if not enable_reservation else (item.memory_mb | default(hosts_defaults[item.type]['memory_mb'])) }}"
       memory_reservation_lock: "{{ 'True' if enable_reservation else 'False' }}"
       cpu_reservation: "{{ '0' if not enable_reservation else (vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']))) }}"
     cdrom:

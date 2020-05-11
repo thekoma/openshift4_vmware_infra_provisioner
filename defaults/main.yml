@@ -1,30 +1,31 @@
 # ansible-configured
 ---
 
-ocp_vm_cleanup: false
-ocp_vm_create_webserver: True
-ocp_vm_create_haproxy: True
-ocp_vm_create_ipxe: True
-enable_reservation: True
+ocp_vm_cleanup: false         # Cleanup everything. Use with caution I don't request confirmation
+ocp_vm_create_webserver: True # Enable/Disable this portion of role
+ocp_vm_create_haproxy: True   # Enable/Disable this portion of role
+ocp_vm_create_ipxe: True      # Enable/Disable this portion of role
+enable_reservation: True      # For production environment you should enavle this
 cpu_biggest: 0                # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
 dns_fail_is_not_fatal: False  # Ignore all DNS checks (You should nod ignore this kind of errors)
 ptr_fail_is_not_fatal: True   # Using iPXE PTR should not be a problem.
 checks_only: False            # Do the Checks and exit
 
 vcenter:
-    host: vcenter.vsphere.local
-    user: administrator@vsphere.local
-    password: password
-    datacenter: datacenter01
-    folder: /OKD
-    validate_certs: no
-    datastore: "datastore01" 
+    host: vcenter.vsphere.local       # vcenter's hostname
+    user: administrator@vsphere.local # vcenter's username
+    password: password                # vcenter's password
+    datacenter: datacenter01          # datacenter to use
+    folder: /OKD                      # Where to place VM in vcenter
+    validate_certs: no                # Validate vcenter's certificate
+    datastore: "datastore01"          # Where to create VM
 
 ocp_installer:
-    basedomain: lab.local
-    clustername: okd01
-    pullsecret: FILLME 
-    sshkey: FILLME
+    basedomain: lab.local             # Base domain
+    clustername: okd01                # The cluster name (prepend on basedomain)
+    pullsecret: FILLME                # Pull secret from https://cloud.openshift.com
+    sshkey: FILLME                    # SSH Key to be installed to login with user core on machines
+    # You should find everything you need around there: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
     kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
     initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
     rhcosimage: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
@@ -32,7 +33,9 @@ ocp_installer:
     clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
 
 hosts_defaults:
-    iso: "ocp_pxe.iso"
+    # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
+    iso: "ocp_pxe.iso"                
+    # Network configuration
     network:
       name: MyNetWork
       mask: 255.255.255.0
@@ -40,12 +43,13 @@ hosts_defaults:
       dns:  # Max 3
           - 192.168.0.2
           - 192.168.0.3
+    # Kind of nodes. Those are the default values so that you shouldn't have to
+    # repeat them for every node. But you can override them. All those values are Required.
     generic:
       nested_virt: False
       memory_mb: 16384
       num_cpus: 4
       num_cpu_cores_per_socket: 1
-      mem_limit: 16384
       disk: 120
       guest_id: other4xLinux64Guest
       ignition: none
@@ -54,7 +58,6 @@ hosts_defaults:
       memory_mb: 16384
       num_cpus: 4
       num_cpu_cores_per_socket: 1
-      mem_limit: 16384
       disk: 120
       guest_id: coreos64Guest
       ignition: master.ign
@@ -63,7 +66,6 @@ hosts_defaults:
       memory_mb: 16384
       num_cpus: 4
       num_cpu_cores_per_socket: 1
-      mem_limit: 16384
       disk: 120
       guest_id: coreos64Guest
       ignition: bootstrap.ign
