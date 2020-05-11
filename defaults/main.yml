@@ -1,16 +1,21 @@
+# ansible-configured
 ---
 
-ocp_vm_cleanup: no
-ocp_vm_create_webserver: yes
-ocp_vm_create_haproxy: yes
-ocp_vm_create_ipxe: yes
+ocp_vm_cleanup: false
+ocp_vm_create_webserver: True
+ocp_vm_create_haproxy: True
+ocp_vm_create_ipxe: True
+enable_reservation: True
+cpu_biggest: 0                # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
+dns_fail_is_not_fatal: False  # Ignore all DNS checks (You should nod ignore this kind of errors)
+ptr_fail_is_not_fatal: True   # Using iPXE PTR should not be a problem.
+checks_only: False            # Do the Checks and exit
 
 vcenter:
     host: vcenter.vsphere.local
     user: administrator@vsphere.local
     password: password
     datacenter: datacenter01
-    storage: /OKD
     folder: /OKD
     validate_certs: no
     datastore: "datastore01" 
@@ -27,8 +32,7 @@ ocp_installer:
     clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
 
 hosts_defaults:
-    boot: iso
-    iso: "ISOs/ocp_pxe.iso"
+    iso: "ocp_pxe.iso"
     network:
       name: MyNetWork
       mask: 255.255.255.0
@@ -37,48 +41,48 @@ hosts_defaults:
           - 192.168.0.2
           - 192.168.0.3
     generic:
+      nested_virt: False
       memory_mb: 16384
       num_cpus: 4
       num_cpu_cores_per_socket: 1
       mem_limit: 16384
-      mem_reservation: 0
       disk: 120
-      memory_reservation_lock: False
       guest_id: other4xLinux64Guest
       ignition: none
     master:
+      nested_virt: True
       memory_mb: 16384
       num_cpus: 4
       num_cpu_cores_per_socket: 1
       mem_limit: 16384
-      mem_reservation: 0
       disk: 120
-      memory_reservation_lock: False
       guest_id: coreos64Guest
       ignition: master.ign
     bootstrap:
+      nested_virt: False
       memory_mb: 16384
       num_cpus: 4
       num_cpu_cores_per_socket: 1
       mem_limit: 16384
-      mem_reservation: 0
       disk: 120
-      memory_reservation_lock: False
       guest_id: coreos64Guest
       ignition: bootstrap.ign
     worker:
+      nested_virt: True
       memory_mb: 8192
       num_cpus: 4
       num_cpu_cores_per_socket: 1
       mem_limit: 8192
-      mem_reservation: 0
       disk: 120
-      memory_reservation_lock: False
       guest_id: coreos64Guest
       ignition: worker.ign
 
 vm_hosts:
     - hostname: master1.ocp.okd01.lab.local # Required
+      nested_virt: True                     # Optional
+      num_cpus: 4                           # Optional
+      num_cpu_cores_per_socket: 1           # Optional
+      memory_mb: 16384                      # Optional
       vmname: master1                       # Optional
       type: master                          # Required
       annotation: 'First node'              # Optional

@@ -1,0 +1,88 @@
+#ansible-configured
+
+- name: Install Ansible's DNS required libraryes
+  delegate_to: localhost
+  yum:
+    name: 
+      - python3-dns
+      - python3-netaddr
+    state: present
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
+
+
+- name: Fail if not 3 etcd
+  fail:
+    msg: 
+      - "There should be exactly 3 A records in SRV record for etcd."
+      - "{{  '_etcd-server-ssl._tcp.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain }}"
+      - "{{ lookup('dig', '_etcd-server-ssl._tcp.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain + './SRV').split(',') }}"
+  when: 
+    - lookup('dig', '_etcd-server-ssl._tcp.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain + './SRV').split(',')|count != 3
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
+
+
+- name: Fail if not exist A record for API
+  fail:
+    msg: 
+      - "Couldn't resolve the api record {{ 'api.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain }}"
+      - "{{ lookup('dig', 'api.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain , 'qtype=A') }}"
+  when: 
+    - lookup('dig', 'api.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain , 'qtype=A') == 'NXDOMAIN'
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
+
+
+- name: Fail if not exist A record for API-INT
+  fail:
+    msg: 
+      - "Couldn't resolve the api-int record {{ 'api-int.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain }}"
+      - "{{ lookup('dig', 'api-int.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain , 'qtype=A') }}"
+  when: 
+    - lookup('dig', 'api-int.'+ ocp_installer.clustername + '.' + ocp_installer.basedomain , 'qtype=A') == 'NXDOMAIN'
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
+
+
+- name: Fail if record A does not exist for Virtual Machine
+  loop: "{{ vm_hosts }}"
+  fail:
+    msg: 
+      - "Couldn't resolve the hostname for {{item.hostname}}{{ '.' if item.vmname is undefined else ' for the machine ' + item.vmname }}"
+      - "{{ lookup('dig', item.hostname , 'qtype=A') }}"
+      - "Note I'm picky and ALL the machines should have a working hostname"
+  when: 
+    - lookup('dig', item.hostname , 'qtype=A') != item.network.ip
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
+
+
+- name: Fail if record PTR does not exist for Virtual Machine
+  loop: "{{ vm_hosts }}"
+  fail:
+    msg: 
+      - "Couldn't resolve the hostname for {{item.hostname}}{{ '.' if item.vmname is undefined else ' for the machine ' + item.vmname }}"
+      - "{{ lookup('dig', item.network.ip | ipaddr('revdns') , 'qtype=PTR') }}"
+      - "Note I'm picky and ALL the machines should have a working PTR and only one record is admitted"
+  when: 
+    - lookup('dig', item.network.ip | ipaddr('revdns') , 'qtype=PTR').split(',') | count > 1 or
+      not  item.hostname + '.' in lookup('dig', item.network.ip | ipaddr('revdns') , 'qtype=PTR')
+  ignore_errors: "{{ 'Yes'|bool if (ptr_fail_is_not_fatal|bool or dns_fail_is_not_fatal|bool ) else 'No' }}"
+
+
+- name: Resolve the record A for the webserver
+  fail:
+    msg: 
+      - "We should be able to resolve the WebServer"
+  when: 
+    - lookup('dig', hostvars[ groups['webserver'][0] ]['ansible_fqdn'] , 'qtype=A') == 'NXDOMAIN'
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
+
+
+
+- name: Resolve the record A for etcd Servers
+  loop: "{{ vm_hosts | selectattr('type', 'equalto', 'master') | list }}"
+  loop_control:
+    extended: yes
+  fail:
+    msg: 
+      - "Etcd record A should be equal to the master IP"
+  when: 
+    - lookup('dig', 'etcd-' + ansible_loop.index0|string + '.' + ocp_installer.clustername + '.' + ocp_installer.basedomain , 'qtype=A') != item.network.ip
+  ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"

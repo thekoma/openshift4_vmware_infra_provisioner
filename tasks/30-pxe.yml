@@ -1,5 +1,6 @@
 ---
 - name: Install Needed Packages
+  delegate_to: localhost
   yum:
     state: present
     name:
@@ -14,21 +15,25 @@
       - coreutils
 
 - name: "Check if {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso exist"
+  delegate_to: localhost
   stat: 
     path: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
   register: ipxe_iso
 
 - name: Create rhcos_ipxe.iso
+  delegate_to: localhost
   when: 
    - not ipxe_iso.stat.exists
   block: 
     - name: Create tempdir
+      delegate_to: localhost
       file:
         path: "{{playbook_dir}}/tmp/src/ipxe"
         state: directory
         recurse: yes
 
     - name: Fetch ipxe source code
+      delegate_to: localhost
       git:
         repo: https://github.com/ipxe/ipxe/
         dest: "{{playbook_dir}}/tmp/src/ipxe"
@@ -36,6 +41,7 @@
 
 
     - name: Ensure VMWARE_SETTINGS are enabled
+      delegate_to: localhost
       lineinfile:
         path: "{{playbook_dir}}/tmp/src/ipxe/src/config/settings.h"
         regexp: '^#define	VMWARE_SETTINGS'
@@ -43,22 +49,26 @@
         insertafter: '.*PCI_SETTINGS.*'
 
     - name: Create ipxe config path
+      delegate_to: localhost
       file:
         path: "{{playbook_dir}}/tmp/iso"
         state: directory
 
     - name: Generate ipxe script from template
+      delegate_to: localhost
       template:
         src: vmware.ipxe.j2
         dest: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
 
 
     - name: Cleanup ipxe
+      delegate_to: localhost
       make:
         chdir: "{{playbook_dir}}/tmp/src/ipxe/src/"
         target: clean
 
     - name: Build '{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso' target with extra arguments
+      delegate_to: localhost
       make:
         chdir: "{{playbook_dir}}/tmp/src/ipxe/src/"
         target: bin/ipxe.iso
@@ -67,6 +77,7 @@
           EMBED: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
 
     - name: "Copy produced ipxe iso in {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+      delegate_to: localhost
       copy:
         src: "{{playbook_dir}}/tmp/src/ipxe/src/bin/ipxe.iso"
         dest: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"

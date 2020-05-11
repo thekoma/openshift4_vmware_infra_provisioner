@@ -1,21 +1,25 @@
 - name: Check if installer already exist
+  delegate_to: localhost  
   register: oc_bin
   stat:
     path: "/usr/bin/oc"
 
 - name: Download Client
   when: not oc_bin.stat.exists
+  delegate_to: localhost  
   get_url:
     url: "{{ ocp_installer.clients }}"
     dest: "{{playbook_dir}}/tmp/downloads/ocp_clients.tgz"
 
 - name: "Extract {{playbook_dir}}/tmp/downloads/ocp_clients.tgz in {{playbook_dir}}/tmp/bin"
+  delegate_to: localhost  
   when: not oc_bin.stat.exists
   unarchive:
     src: "{{playbook_dir}}/tmp/downloads/ocp_clients.tgz"
     dest: "{{playbook_dir}}/tmp/bin"
 
 - name: Copy bin in system
+  delegate_to: localhost  
   when: not oc_bin.stat.exists
   loop:
     - kubectl

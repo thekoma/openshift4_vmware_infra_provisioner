@@ -1,3 +1,4 @@
+# ansible-configured
 ---
 
 
@@ -85,6 +86,7 @@
   tags: vm
   loop: "{{ vm_hosts }}"
   vmware_guest:
+    annotation: "{{ item.annotation | default('Openshift node ' + item.type) }}"
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
     password: "{{ vcenter.password }}"
@@ -99,13 +101,13 @@
         type: thin
         datastore:  "{{ vcenter.datastore }}"
     hardware:
+      nested_virt: "{{ item.nested_virt | default(hosts_defaults[item.type]['nested_virt']) }}"
       memory_mb: "{{ item.memory_mb | default(hosts_defaults[item.type]['memory_mb']) }}"
       num_cpus: "{{ item.num_cpus | default(hosts_defaults[item.type]['num_cpus']) }}"
       num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']) }}"
-      mem_limit: "{{ item.mem_limit | default(hosts_defaults[item.type]['mem_limit']) }}"
-      mem_reservation: "{{ item.mem_limit | default(hosts_defaults[item.type]['mem_limit']) }}"
-      memory_reservation_lock: "{{ item.memory_reservation_lock | default(hosts_defaults[item.type]['memory_reservation_lock']) }}"
-      cpu_reservation: "{{ vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket'])) }}"
+      mem_reservation: "{{ '0' if not enable_reservation else (item.mem_limit | default(hosts_defaults[item.type]['mem_limit'])) }}"
+      memory_reservation_lock: "{{ 'True' if enable_reservation else 'False' }}"
+      cpu_reservation: "{{ '0' if not enable_reservation else (vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']))) }}"
     cdrom:
       type: iso
       iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
@@ -121,7 +123,7 @@
       - key: guestinfo.ipxe.net0.gateway
         value: "{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}"
       - key: guestinfo.ipxe.fileserver
-        value: "http://{{ hostvars['localhost']['ansible_fqdn'] }}:8080"
+        value: "http://{{ hostvars[ groups['webserver'][0] ]['ansible_fqdn'] }}:8080"
       - key: guestinfo.ipxe.dns
         value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) | default(Null) }}"
       - key: guestinfo.ipxe.dns1
@@ -142,12 +144,8 @@
         value: "ens192"
       - key: disk.EnableUUID
         value: "TRUE"
-      - key: annotation
-        value: "{{ item.annotation | default('Openshift node ' + item.type) }}"
       - key: sched.cpu.latencySensitivity
-        value: "{{ item.latencysensitivity |  default(hosts_defaults[item.type]['latencysensitivity']) | default('low') }}"
-      - key: vhv.enable
-        value: "TRUE"
+        value: "{{ 'high' if enable_reservation else 'normal' }}"
     networks:
     - name: "{{ item.network.name |  default(hosts_defaults['network']['name']) }}"
   delegate_to: localhost

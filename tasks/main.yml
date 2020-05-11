@@ -1,8 +1,16 @@
 ---
+- name: Configuration coherence check
+  include_tasks: 00-set_facts_and_cfg_check.yml
+
+- name: Environment check
+  include_tasks:  01-check_dns.yml
+
 - name: Prepare WebServer
   when: 
-    - not ocp_vm_cleanup
+    - not checks_only|bool
+    - not ocp_vm_cleanup|bool
     - ocp_vm_create_webserver
+    - "'webserver' in group_names"
   tags: 
    - web
    - nginx
@@ -10,17 +18,20 @@
 
 - name: Prepare HaProxy
   when: 
-    - not ocp_vm_cleanup
+    - not checks_only|bool
+    - not ocp_vm_cleanup|bool
     - ocp_vm_create_haproxy
+    - "'haproxy' in group_names"
   tags: 
-   - web
-   - haproxy
+    - web
+    - haproxy
   include_tasks: 20-haproxy.yml
 
 
 - name: Create PXE Image
   when: 
-    - not ocp_vm_cleanup
+    - not checks_only|bool
+    - not ocp_vm_cleanup|bool
     - ocp_vm_create_ipxe
   tags: 
     - pxe
@@ -29,26 +40,37 @@
   include_tasks: 30-pxe.yml
 
 - name: prepare installer
-  when: not ocp_vm_cleanup
+  when: 
+    - not ocp_vm_cleanup|bool
+    - not ad
   tags: 
     - installer
   include_tasks: 40-installer.yml
 
 - name: Create VMS
-  when: not ocp_vm_cleanup
+
+  when: 
+    - not ocp_vm_cleanup|bool
+    - not checks_only|bool
+    - not ad
   tags: 
     - vms
   include_tasks: 50-vms.yml
 
 - name: Install Client
-  when: not ocp_vm_cleanup
+  when: 
+    - not ocp_vm_cleanup|bool
+    - not checks_only|bool
+    - not ad
   tags: 
     - kubectl
     - oc
   include_tasks: 60-client.yml
 
-- name: Debug Messages
-  when: ocp_vm_cleanup
+- name: Cleanup
+  when: 
+  - ocp_vm_cleanup|bool
+  - not checks_only|bool
   tags: 
     - debug
   include_tasks: 99-cleanup.yml

@@ -1,0 +1,35 @@
+# ansible-configured
+- name: Fail if missing value
+  fail:
+    msg: 
+      - "Please specify the frequence in Mhz of the biggest CPU in the cluster if you want to enable reservation."
+      - "If you are running the script for a production envitonment this is HIGLY suggested."
+  when: 
+    - enable_reservation|bool
+    - cpu_biggest is undefined or cpu_biggest <= 1
+
+- name: Fail if not enought nodes
+  fail:
+    msg: 
+      - "You need at least 3 master nodes and 1 worker"
+  when: 
+    - (vm_hosts | selectattr("type", "equalto", "master") | list | count) < 3
+    - (vm_hosts | selectattr("type", "equalto", "worker") | list | count) < 1
+
+
+- name: Fail if not filled the network variables
+  fail:
+    msg: 
+      - "Check your variables, you need a Network a nermask a gateway and at least one dns"
+  when: 
+    - hosts_defaults.network.name is undefined
+    - hosts_defaults.network.mask is undefined
+    - hosts_defaults.network.gw is undefined
+    - hosts_defaults.network.dns[0] is undefined
+
+- name: Check how many servers are in group webserver
+  fail:
+    msg: 
+      - "You Should have at least one webserver."
+  when: 
+    - groups.webserver| list | count != 1

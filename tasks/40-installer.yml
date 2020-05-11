@@ -1,30 +1,36 @@
 - name: Check if installer already exist
+  delegate_to: localhost  
   register: installer_bin
   stat:
     path: "{{playbook_dir}}/tmp/bin/openshift-install"
 
 - name: Check if configuration already exist
+  delegate_to: localhost  
   register: install_config
   stat:
     path: "{{playbook_dir}}/tmp/cluster_conf/install-config.yaml"
 
 - name: Check if manifest already exist
+  delegate_to: localhost  
   register: manifest_dir
   stat:
     path: "{{playbook_dir}}/tmp/cluster_conf/manifests/"
 
 - name: Check if ignition already exist
+  delegate_to: localhost  
   register: master_ign
   stat:
     path: "{{playbook_dir}}/tmp/cluster_conf/master.ign"
 
 - name: Check if ignition already exist
+  delegate_to: localhost  
   register: installer_tgz
   stat:
     path: "{{playbook_dir}}/tmp/downloads/ocp_installer.tgz"
 
 
 - name: Create ipxe config path
+  delegate_to: localhost  
   loop:
     - "{{playbook_dir}}/tmp/downloads"
     - "{{playbook_dir}}/tmp/bin"
@@ -35,18 +41,21 @@
     recurse: yes
 
 - name: Download Installer
+  delegate_to: localhost  
   when: not installer_tgz.stat.exists
   get_url:
     url: "{{ ocp_installer.installer }}"
     dest: "{{playbook_dir}}/tmp/downloads/ocp_installer.tgz"
 
 - name: "Extract {{playbook_dir}}/tmp/downloads/ocp_installer.tgz in {{playbook_dir}}/tmp/bin"
+  delegate_to: localhost  
   when: not installer_bin.stat.exists
   unarchive:
     src: "{{playbook_dir}}/tmp/downloads/ocp_installer.tgz"
     dest: "{{playbook_dir}}/tmp/bin"
 
 - name: Create configuration template
+  delegate_to: localhost  
   when: not install_config.stat.exists
   loop:
     - "{{playbook_dir}}/tmp/cluster_conf/install-config.yaml"
@@ -56,10 +65,12 @@
     dest: "{{ item }}"
 
 - name: Create Manifests
+  delegate_to: localhost  
   when: (not manifest_dir.stat.exists) and (not master_ign.stat.exists)
   shell: '{{playbook_dir}}/tmp/bin/openshift-install create manifests --dir="{{playbook_dir}}/tmp/cluster_conf"'
 
 - name: Ensure Masters not schedulable
+  delegate_to: localhost  
   when: not master_ign.stat.exists
   lineinfile:
     path: "{{playbook_dir}}/tmp/cluster_conf/manifests/cluster-scheduler-02-config.yml"
@@ -67,10 +78,12 @@
     line: '  mastersSchedulable: false'
 
 - name: Create Ignition
+  delegate_to: localhost  
   when: not master_ign.stat.exists
   shell: '{{playbook_dir}}/tmp/bin/openshift-install create ignition-configs --dir="{{playbook_dir}}/tmp/cluster_conf"'
 
 - name: Copy files to Nginx Share
+  delegate_to: localhost  
   loop:
     - bootstrap.ign
     - master.ign
