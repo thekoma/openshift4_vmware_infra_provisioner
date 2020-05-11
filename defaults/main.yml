@@ -33,7 +33,7 @@ hosts_defaults:
       name: MyNetWork
       mask: 255.255.255.0
       gw: 192.168.0.1
-      dns:
+      dns:  # Max 3
           - 192.168.0.2
           - 192.168.0.3
     generic:
@@ -78,16 +78,18 @@ hosts_defaults:
       ignition: worker.ign
 
 vm_hosts:
-    - hostname: master1.ocp.okd01.lab.local
-      type: master
+    - hostname: master1.ocp.okd01.lab.local # Required
+      vmname: master1                       # Optional
+      type: master                          # Required
+      annotation: 'First node'              # Optional
       network:
-          ip: 192.168.168.180 # Required
-          name: MyNetWork     # Optional
-          mask: 255.255.255.0 # Optional
-          gw: 192.168.0.1     # Optional
-          dns:                # Optional
-              - 192.168.0.2   # Optional
-              - 192.168.0.3  # Optional
+          ip: 192.168.168.180               # Required
+          name: MyNetWork                   # Optional
+          mask: 255.255.255.0               # Optional
+          gw: 192.168.0.1                   # Optional
+          dns:                              # Optional
+              - 192.168.0.2                 # Optional
+              - 192.168.0.3                 # Optional
     - hostname: master2.ocp.okd01.lab.local
       type: master
       network:
@@ -112,3 +114,7 @@ vm_hosts:
       type: bootstrap
       network:
           ip: 192.168.168.187
+    - hostname: bootstrap.ocp.okd01.lab.local
+      type: generic
+      network:
+          ip: 192.168.168.188

@@ -49,7 +49,7 @@
 
     - name: Generate ipxe script from template
       template:
-        src: vmware.ipxe
+        src: vmware.ipxe.j2
         dest: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
 
 

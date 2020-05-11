@@ -13,7 +13,7 @@
     name: 
       - PyVmomi
 
-- name: Create Directory in Datastore
+- name: Create Directory in Datastore to host iPXE
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -21,12 +21,12 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"      
-    path: "{{ vcenter.storage }}"
+    path: "{{ ocp_installer.clustername }}"
     state: directory
   delegate_to: localhost
   ignore_errors: yes
 
-- name: "Query a ipxe iso file on a datastore {{ vcenter.storage }}/{{ hosts_defaults.iso }}"
+- name: "Query a ipxe iso file on a datastore {{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -34,15 +34,11 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"      
-    path: "{{ vcenter.storage }}/{{ hosts_defaults.iso }}"
+    path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
     state: file
   delegate_to: localhost
   ignore_errors: yes
   register: ipxe_inuse
-
-- name: Print the var
-  debug:
-    msg: "{{ ipxe_inuse }}"
 
 - name: Copy file to datastore using delegate_to
   when: ipxe_inuse.state == 'absent'
@@ -54,7 +50,33 @@
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"
     src: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
-    path: "{{ vcenter.storage }}/{{ hosts_defaults.iso }}"
+    path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
+  delegate_to: localhost
+
+- name: "Create a VM folder ({{ vcenter.folder }}) on datacenter {{ vcenter.datacenter }}"
+  vcenter_folder:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    folder_name: "{{ vcenter.folder }}"
+    folder_type: vm
+    state: present
+  register: vm_folder_creation_result
+  delegate_to: localhost
+
+- name: "Create a Datastore folder ({{ ocp_installer.clustername }}) on datacenter {{ vcenter.datacenter }}"
+  vcenter_folder:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    folder_name: "{{ ocp_installer.clustername }}"
+    folder_type: datastore
+    state: present
+  register: vm_folder_creation_result
   delegate_to: localhost
 
 - name: Create a virtual machine from a template
@@ -71,15 +93,15 @@
     datacenter: "{{ vcenter.datacenter }}"
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
     disk:
-    - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
-      type: thin
-      datastore:  "{{ vcenter.datastore }}"
+      - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
+        type: thin
+        datastore:  "{{ vcenter.datastore }}"
     hardware:
       memory_mb: "{{ item.memory_mb | default(hosts_defaults[item.type]['memory_mb']) }}"
       num_cpus: "{{ item.num_cpus | default(hosts_defaults[item.type]['num_cpus']) }}"
       num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']) }}"
       mem_limit: "{{ item.mem_limit | default(hosts_defaults[item.type]['mem_limit']) }}"
-      mem_reservation: "{{ item.mem_reservation | default(hosts_defaults[item.type]['mem_reservation']) }}"
+      mem_reservation: "{{ item.mem_limit | default(hosts_defaults[item.type]['mem_limit']) }}"
       memory_reservation_lock: "{{ item.memory_reservation_lock | default(hosts_defaults[item.type]['memory_reservation_lock']) }}"
       cpu_reservation: "{{ vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket'])) }}"
     cdrom:
@@ -98,8 +120,12 @@
         value: "{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}"
       - key: guestinfo.ipxe.fileserver
         value: "http://{{ hostvars['localhost']['ansible_fqdn'] }}:8080"
-      - key: guestinfo.ipxe.dns
+      - key: guestinfo.ipxe.dns1
         value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) }}"
+      - key: guestinfo.ipxe.dns2
+        value: "{{ item.network.dns[1] |  default(hosts_defaults['network']['dns'][1]) }}"
+      - key: guestinfo.ipxe.dns3
+        value: "{{ item.network.dns[2] |  default(hosts_defaults['network']['dns'][2]) }}"
       - key: guestinfo.ipxe.kernel-installer
         value: "kernel"
       - key: guestinfo.ipxe.initrd-installer
