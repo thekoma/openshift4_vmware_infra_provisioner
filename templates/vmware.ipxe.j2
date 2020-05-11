@@ -1,8 +1,48 @@
 #!ipxe
-echo Loading VMWare CoreOS Installer
-echo With parameters: kernel ${fileserver}/${kernel-installer} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none {%- for dns in hosts_defaults.network.dns %} nameserver=${dns{{loop.index }}}{%- endfor %} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition}
+set menu-timeout 5000
+set submenu-timeout ${menu-timeout}
+isset ${menu-default} || set menu-default install
+
+:start
+menu iPXE boot menu
+item --gap --             ------------------------- Install CoreOS ------------------------------
+item --gap --             Parameters: 
+item --gap --             kernel ${fileserver}/${kernel-installer} initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 
+item --gap --             rd.neednet=1 ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none {%- for dns in hosts_defaults.network.dns %} nameserver=${dns{{loop.index }}}{%- endfor %} 
+item --gap --             coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition}
+item --key i install      Install CoreOS
+item --gap --             ------------------------- Advanced options -------------------------------
+item --key c config       Configure settings
+item --key s shell        Drop to iPXE shell
+item --key r reboot        Reboot computer
+item
+item --key x exit         Exit iPXE and continue BIOS boot
+choose --timeout ${menu-timeout} --default ${menu-default} selected || goto cancel
+set menu-timeout 0
+goto ${selected}
+
+:failed
+echo Booting failed, dropping to shell
+goto shell
+
+:reboot
+reboot
+
+:config
+config
+goto start
+
+:shell
+echo Type 'exit' to get the back to the menu
+shell
+set menu-timeout 0
+set submenu-timeout 0
+goto start
+
+:install
 ifopen net0
 kernel ${fileserver}/${kernel-installer} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none {%- for dns in hosts_defaults.network.dns %} nameserver=${dns{{loop.index }}}{%- endfor %} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition}
 initrd ${fileserver}/${initrd-installer}
-boot
-EOF
+boot || goto failed
+goto start
+

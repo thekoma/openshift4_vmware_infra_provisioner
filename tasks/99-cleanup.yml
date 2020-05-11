@@ -14,7 +14,7 @@
   register: deploy
 
 
-- name: Query a file on a datastore
+- name: Delete PXE image
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -22,13 +22,13 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"      
-    path: "{{ hosts_defaults.iso }}"
+    path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
     state: absent
   delegate_to: localhost
   ignore_errors: yes
   register: ipxe_inuse
 
-- name: Create ipxe config path
+- name: Delete local tmp and config files
   loop:
     - "{{playbook_dir}}/tmp"
   file:

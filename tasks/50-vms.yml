@@ -2,6 +2,7 @@
 
 
 - name: Install Ansible's vmware_guest required libraryes
+  delegate_to: localhost
   yum:
     name: 
       - python3-requests
@@ -9,6 +10,7 @@
     state: present
 
 - name: Install python non rpm packages
+  delegate_to: localhost
   pip:
     name: 
       - PyVmomi
@@ -40,7 +42,7 @@
   ignore_errors: yes
   register: ipxe_inuse
 
-- name: Copy file to datastore using delegate_to
+- name: Copy file to datastore
   when: ipxe_inuse.state == 'absent'
   vsphere_copy:
     hostname: "{{ vcenter.host }}"
@@ -106,7 +108,7 @@
       cpu_reservation: "{{ vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket'])) }}"
     cdrom:
       type: iso
-      iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + vcenter.storage + '/' + hosts_defaults.iso) }}"
+      iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
     customvalues:
       - key: guestinfo.ipxe.hostname
         value: "{{ item.hostname }}"
@@ -121,11 +123,11 @@
       - key: guestinfo.ipxe.fileserver
         value: "http://{{ hostvars['localhost']['ansible_fqdn'] }}:8080"
       - key: guestinfo.ipxe.dns1
-        value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) }}"
+        value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) | default(Null) }}"
       - key: guestinfo.ipxe.dns2
-        value: "{{ item.network.dns[1] |  default(hosts_defaults['network']['dns'][1]) }}"
+        value: "{{ item.network.dns[1] |  default(hosts_defaults['network']['dns'][1]) | default(Null) }}"
       - key: guestinfo.ipxe.dns3
-        value: "{{ item.network.dns[2] |  default(hosts_defaults['network']['dns'][2]) }}"
+        value: "{{ item.network.dns[2] |  default(hosts_defaults['network']['dns'][2]) | default(Null) }}"
       - key: guestinfo.ipxe.kernel-installer
         value: "kernel"
       - key: guestinfo.ipxe.initrd-installer
@@ -141,7 +143,7 @@
       - key: annotation
         value: "{{ item.annotation | default('Openshift node ' + item.type) }}"
       - key: sched.cpu.latencySensitivity
-        value: "{{ item.latencysensitivity |  default(hosts_defaults.latencysensitivity) }}"
+        value: "{{ item.latencysensitivity |  default(hosts_defaults[item.type]['latencysensitivity']) | default('low') }}"
       - key: vhv.enable
         value: "TRUE"
     networks:
