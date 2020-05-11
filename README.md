@@ -26,10 +26,30 @@ Example Playbook
 
 ```yaml
 ---
-- hosts: localhost
+- hosts: all
   remote_user: root
   roles:
     - openshift4_infra_provisioner
+```
+
+Example Inventory
+----------------
+
+```yaml
+---
+haproxy:
+  hosts:
+    bastion.ocp.okd01.lab.local
+webserver:
+  hosts:
+    bastion.ocp.okd01.lab.local
+all:
+    vars:
+      enable_reservation: False
+      dns_fail_is_not_fatal: False
+      ptr_fail_is_not_fatal: True
+      checks_only: False
+      #... look for the entire set of variables in defaults/main.yml ...
 ```
 
 License

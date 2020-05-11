@@ -42,7 +42,7 @@
 - name: prepare installer
   when: 
     - not ocp_vm_cleanup|bool
-    - not ad
+    - not checks_only|bool
   tags: 
     - installer
   include_tasks: 40-installer.yml
@@ -52,7 +52,6 @@
   when: 
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
-    - not ad
   tags: 
     - vms
   include_tasks: 50-vms.yml
@@ -61,7 +60,6 @@
   when: 
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
-    - not ad
   tags: 
     - kubectl
     - oc
