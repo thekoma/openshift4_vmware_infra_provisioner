@@ -122,6 +122,8 @@
         value: "{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}"
       - key: guestinfo.ipxe.fileserver
         value: "http://{{ hostvars['localhost']['ansible_fqdn'] }}:8080"
+      - key: guestinfo.ipxe.dns
+        value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) | default(Null) }}"
       - key: guestinfo.ipxe.dns1
         value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) | default(Null) }}"
       - key: guestinfo.ipxe.dns2
