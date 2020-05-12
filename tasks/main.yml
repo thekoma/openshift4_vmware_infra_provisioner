@@ -1,8 +1,14 @@
 ---
 - name: Configuration coherence check
+  when:
+    - not ocp_vm_cleanup|bool
+    - ocp_vm_check_conf|bool
   include_tasks: 00-set_facts_and_cfg_check.yml
 
 - name: Environment check
+  when: 
+    - not ocp_vm_cleanup|bool
+    - ocp_vm_check_env|bool
   include_tasks:  01-check_dns.yml
 
 - name: Prepare WebServer
@@ -39,19 +45,31 @@
     - iso
   include_tasks: 30-pxe.yml
 
+- name: Create Grub Loaders
+  when: 
+    - not checks_only|bool
+    - not ocp_vm_cleanup|bool
+    - ocp_vm_create_grub
+  tags: 
+    - pxe
+    - grub
+    - iso
+  include_tasks: 31-grub.yml
+
 - name: prepare installer
   when: 
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
+    - ocp_vm_prepare_installer|bool
   tags: 
     - installer
   include_tasks: 40-installer.yml
 
 - name: Create VMS
-
   when: 
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
+    - ocp_vm_create_vm|bool
   tags: 
     - vms
   include_tasks: 50-vms.yml
@@ -60,6 +78,7 @@
   when: 
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
+    - ocp_vm_install_client|bool
   tags: 
     - kubectl
     - oc

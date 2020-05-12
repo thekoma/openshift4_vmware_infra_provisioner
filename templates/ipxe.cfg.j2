@@ -1,0 +1,66 @@
+#!ipxe
+set menu-timeout 10000
+set submenu-timeout ${menu-timeout}
+isset ${menu_default} || set menu-default netinstall
+ifopen net0
+
+:start
+menu iPXE boot menu
+item --gap --             ------------------------- Variables ----------------------------
+item --gap --             CoreOS Parameters: 
+item --gap --             console=tty0 console=ttyS0 rd.neednet=1
+item --gap --             kernel ${fileserver}/${kernel-installer} 
+item --gap --             initrd=${fileserver}/${initrd-installer} 
+item --gap --             ip: ${net0/ip} gw: ${net0/gateway} mask:${net0/netmask}
+item --gap --             Hostname: ${hostname}
+item --gap --             Interface: ${net_interface}
+item --gap --             DNS: {%- for dns in hosts_defaults.network.dns %}${dns{{loop.index }}} {%- endfor %} 
+item --gap --             install_dev: ${disk} 
+item --gap --             image_url: ${fileserver}/${rhcos-image} 
+item --gap --             ignition_url: ${fileserver}/${ignition}
+item --gap --             grub.cfg: ${fileserver}/${hostname}/core.0
+item --gap --             ------------------------- Options ------------------------------
+item --key n netinstall   Install CoreOS via Netinstall (iPXE)
+item --key t template     Install CoreOS via Template   (Grub)
+item --key l loadcustom   Chainload Custom script
+item --gap --             ------------------------- Advanced options ---------------------
+item --key c config       Configure settings
+item --key s shell        Drop to iPXE shell
+item --key r reboot       Reboot computer
+item --gap --
+item --key x exit         Exit iPXE and continue BIOS boot
+choose --timeout ${menu-timeout} --default ${menu_default} selected || goto cancel
+set menu-timeout 0
+goto ${selected}
+
+:netinstall
+ifopen net0
+kernel ${fileserver}/${kernel-installer} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none {%- for dns in hosts_defaults.network.dns %} nameserver=${dns{{loop.index }}}{%- endfor %} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition}
+initrd ${fileserver}/${initrd-installer}
+boot || goto failed
+goto start
+
+:template
+ifopen net0
+chain --autofree ${fileserver}/${hostname}/core.0 || goto failed
+
+:failed
+echo Booting failed, dropping to shell
+goto shell
+
+:loadcustom
+chain --autofree ${fileserver}/loadcustom.ipxe || goto failed
+
+:reboot
+reboot
+
+:config
+config
+goto start
+
+:shell
+echo Type 'exit' to get the back to the menu
+shell
+set menu-timeout 0
+set submenu-timeout 0
+goto start

@@ -13,6 +13,7 @@
       - syslinux
       - "@Development tools"
       - coreutils
+      - grub2-tools
 
 - name: "Check if {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso exist"
   delegate_to: localhost
@@ -40,13 +41,91 @@
         force: yes
 
 
+
     - name: Ensure VMWARE_SETTINGS are enabled
+      loop:
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/settings.h"
+          regexp: '^#define	VMWARE_SETTINGS'
+          line: '#define	VMWARE_SETTINGS'
+          insertbefore: '^#endif'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	DOWNLOAD_PROTO_HTTPS'
+          line: '#define	DOWNLOAD_PROTO_HTTPS'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	DOWNLOAD_PROTO_FTP'
+          line: '#define	DOWNLOAD_PROTO_FTP'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	DOWNLOAD_PROTO_NFS'
+          line: '#define	DOWNLOAD_PROTO_NFS'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	NSLOOKUP_CMD'
+          line: '#define	NSLOOKUP_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	TIME_CMD'
+          line: '#define	TIME_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	DIGEST_CMD'
+          line: '#define	DIGEST_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	LOTEST_CMD'
+          line: '#define	LOTEST_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	VLAN_CMD'
+          line: '#define	VLAN_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	PXE_CMD'
+          line: '#define	PXE_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	REBOOT_CMD'
+          line: '#define	REBOOT_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	POWEROFF_CMD'
+          line: '#define	POWEROFF_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	IMAGE_TRUST_CMD'
+          line: '#define	IMAGE_TRUST_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	PCI_CMD'
+          line: '#define	PCI_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	PARAM_CMD'
+          line: '#define	PARAM_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	NEIGHBOUR_CMD'
+          line: '#define	NEIGHBOUR_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	PING_CMD'
+          line: '#define	PING_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	CONSOLE_CMD'
+          line: '#define	CONSOLE_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
+        - path: "{{playbook_dir}}/tmp/src/ipxe/src/config/general.h"
+          regexp: '^#define	IPSTAT_CMD'
+          line: '#define	IPSTAT_CMD'
+          insertbefore: '^#include\ \<config/named\.h\>'
       delegate_to: localhost
       lineinfile:
-        path: "{{playbook_dir}}/tmp/src/ipxe/src/config/settings.h"
-        regexp: '^#define	VMWARE_SETTINGS'
-        line: '#define	VMWARE_SETTINGS'
-        insertafter: '.*PCI_SETTINGS.*'
+        path: "{{item.path}}"
+        regexp: "{{item.regexp}}"
+        line: "{{item.line}}"
+        insertbefore: "{{item.insertbefore}}"
 
     - name: Create ipxe config path
       delegate_to: localhost
@@ -57,9 +136,8 @@
     - name: Generate ipxe script from template
       delegate_to: localhost
       template:
-        src: vmware.ipxe.j2
+        src: "{{ipxe_template}}"
         dest: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
-
 
     - name: Cleanup ipxe
       delegate_to: localhost

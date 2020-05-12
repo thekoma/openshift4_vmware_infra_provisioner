@@ -93,7 +93,7 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     folder: "{{ vcenter.folder }}"
     name: "{{ item.vmname | default(item.hostname) }}"
-    state: poweredon
+    state: present
     datacenter: "{{ vcenter.datacenter }}"
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
     disk:
@@ -119,29 +119,31 @@
       - key: guestinfo.ipxe.net0.ip
         value: "{{ item.network.ip }}"
       - key: guestinfo.ipxe.net0.netmask
-        value: "{{ item.network.mask |  default(hosts_defaults['network']['mask']) }}"
+        value: "{{ item.network.mask |  default(hosts_defaults.network.mask) }}"
       - key: guestinfo.ipxe.net0.gateway
-        value: "{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}"
+        value: "{{ item.network.gw |  default(hosts_defaults.network.gw) }}"
       - key: guestinfo.ipxe.fileserver
-        value: "http://{{ hostvars[ groups['webserver'][0] ]['ansible_fqdn'] }}:8080"
+        value: "http://{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080"
       - key: guestinfo.ipxe.dns
-        value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) | default(Null) }}"
+        value: "{{ item.network.dns[0] |  default(hosts_defaults.network.dns[0]) | default(Null) }}"
       - key: guestinfo.ipxe.dns1
-        value: "{{ item.network.dns[0] |  default(hosts_defaults['network']['dns'][0]) | default(Null) }}"
+        value: "{{ item.network.dns[0] |  default(hosts_defaults.network.dns[0]) | default(Null) }}"
       - key: guestinfo.ipxe.dns2
-        value: "{{ item.network.dns[1] |  default(hosts_defaults['network']['dns'][1]) | default(Null) }}"
+        value: "{{ item.network.dns[1] |  default(hosts_defaults.network.dns[1]) | default(Null) }}"
       - key: guestinfo.ipxe.dns3
-        value: "{{ item.network.dns[2] |  default(hosts_defaults['network']['dns'][2]) | default(Null) }}"
+        value: "{{ item.network.dns[2] |  default(hosts_defaults.network.dns[2]) | default(Null) }}"
       - key: guestinfo.ipxe.kernel-installer
-        value: "kernel"
+        value: "{{ item.kernelimg |  default(hosts_defaults.kernelimg) | default('kernel') }}"
       - key: guestinfo.ipxe.initrd-installer
-        value: "initramfs.img"
+        value: "{{ item.initramfs |  default(hosts_defaults.initramfs) | default('initramfs.img') }}"
       - key: guestinfo.ipxe.rhcos-image
-        value: "rhcos.raw.gz"
+        value: "{{ item.rhcosimage | default(hosts_defaults.rhcosimage) | default('rhcos.raw.gz') }}" 
       - key: guestinfo.ipxe.disk
-        value: "sda"
+        value: "{{ item.disk |  default(hosts_defaults['disk']) | default('sda') }}"
       - key: guestinfo.ipxe.net_interface
-        value: "ens192"
+        value: "{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('ens192') }}"
+      - key: guestinfo.ipxe.menu_default
+        value: "{{ item.install_method |  default(hosts_defaults.install_method) }}"
       - key: disk.EnableUUID
         value: "TRUE"
       - key: sched.cpu.latencySensitivity
@@ -150,3 +152,18 @@
     - name: "{{ item.network.name |  default(hosts_defaults['network']['name']) }}"
   delegate_to: localhost
   register: deploy
+
+
+- name: Power on Machines
+  tags: vm
+  loop: "{{ vm_hosts }}"
+  vmware_guest:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    name: "{{ item.vmname | default(item.hostname) }}"
+    state: poweredon
+    datacenter: "{{ vcenter.datacenter }}"
+  delegate_to: localhost
+  register: deploy  
