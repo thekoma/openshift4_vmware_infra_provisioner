@@ -6,7 +6,7 @@ This Role provides the simplest way to install openshift 4 taking care of all th
 Features:
 ------------
 - **You don't need DHCP**
-- check for yout environment
+- check for your environment
 - Validate your configuration
 - Validate your DNS
 - Configure an HaProxy (not deploy it, only configure ATM)
