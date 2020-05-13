@@ -1,22 +1,91 @@
 # ansible-configured
 ---
 
-ocp_vm_cleanup: false          # Cleanup everything. Use with caution I don't request confirmation
-ocp_vm_check_conf: True        # Enable/Disable this portion of role
-ocp_vm_check_env: True         # Enable/Disable this portion of role
-ocp_vm_create_webserver: True  # Enable/Disable this portion of role
-ocp_vm_create_haproxy: True    # Enable/Disable this portion of role
-ocp_vm_create_ipxe: True       # Enable/Disable this portion of role
-ocp_vm_create_grub: True        # Enable/Disable this portion of role
-ocp_vm_prepare_installer: True # Enable/Disable this portion of role
-ocp_vm_create_vm: True         # Enable/Disable this portion of role
-ocp_vm_install_client: True    # Enable/Disable this portion of role
-enable_reservation: True       # For production environment you should enavle this
-cpu_biggest: 0                 # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
-dns_fail_is_not_fatal: False   # Ignore all DNS checks (You should nod ignore this kind of errors)
-ptr_fail_is_not_fatal: True    # Using iPXE PTR should not be a problem.
-checks_only: False             # Do the Checks and exit
-ipxe_template: ipxe.cfg.j2     # Useful for Customize your Menu (I.E. adding https://netboot.xyz/)
+ocp_vm_cleanup: false               # Cleanup Mode. Use with caution I don't request confirmation
+ocp_vm_cleanup_preserve_vm: False   # Preserver VMs when Clenup mode is engaged.
+ocp_vm_cleanup_preserve_tmp: False  # Preserver tmp folder when Clenup mode is engaged.
+ocp_vm_cleanup_preserve_iso: False  # Preserver iso in datastore when Clenup mode is engaged.
+ocp_vm_check_conf: True             # Enable/Disable this portion of role
+ocp_vm_check_env: True              # Enable/Disable this portion of role
+ocp_vm_create_webserver: True       # Enable/Disable this portion of role
+ocp_vm_create_haproxy: True         # Enable/Disable this portion of role
+ocp_vm_create_ipxe: True            # Enable/Disable this portion of role
+ocp_vm_create_grub: True            # Enable/Disable this portion of role
+ocp_vm_prepare_installer: True      # Enable/Disable this portion of role
+ocp_vm_create_vm: True              # Enable/Disable this portion of role
+ocp_vm_install_client: True         # Enable/Disable this portion of role
+enable_reservation: True            # For production environment you should enavle this
+cpu_biggest: 0                      # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
+dns_fail_is_not_fatal: False        # Ignore all DNS checks (You should nod ignore this kind of errors)
+ptr_fail_is_not_fatal: True         # Using iPXE PTR should not be a problem.
+checks_only: False                  # Do the Checks and exit
+ipxe_template: ipxe.cfg.j2          # Useful for Customize your Menu (I.E. adding https://netboot.xyz/)
+grub_outformat: i386-pc-pxe
+grub_modules: >-
+  all_video
+  biosdisk
+  blscfg
+  boot
+  btrfs
+  bufio
+  cat
+  cbfs
+  chain
+  configfile
+  crypto
+  datetime
+  disk
+  echo
+  ext2
+  extcmd
+  fat
+  font
+  fshelp
+  gcry_crc
+  gettext
+  gfxmenu
+  gfxterm
+  gzio
+  halt
+  hfsplus
+  http
+  iso9660
+  jpeg
+  linux
+  loadenv
+  ls
+  lspci
+  lvm
+  mdraid09
+  mdraid1x
+  minicmd
+  nativedisk
+  net
+  normal
+  part_apple
+  part_gpt
+  part_msdos
+  password_pbkdf2
+  png
+  priority_queue
+  probe
+  pxe
+  reboot
+  regexp
+  scsi
+  search
+  search_fs_file
+  search_fs_uuid
+  search_label
+  serial
+  sleep
+  syslinuxcfg
+  terminal
+  terminfo
+  test
+  tftp
+  video
+  xfs
 
 vcenter:
     host: vcenter.vsphere.local       # vcenter's hostname
@@ -43,6 +112,7 @@ hosts_defaults:
     # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
     # install_method: netinstall
     install_method: netinstall # [ netinstall | template ]
+    template: "rhcos-4.4.3-x86_64-vmware.x86_64"
     iso: "pxe.iso"                
     # Network configuration
     network:

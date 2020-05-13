@@ -38,7 +38,13 @@
 - name: Build Grub PXE
   loop: "{{vm_hosts}}"
   delegate_to: localhost
-  shell: "grub2-mkimage -c {{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.grub_pxeboot.cfg -O i386-pc-pxe -o {{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.core.0  -p '(http,{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080)/' ls lspci http echo cbfs reboot normal boot configfile extcmd search net test loadenv serial blscfg serial pxe"
+  shell: >-
+    grub2-mkimage 
+    -c {{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.grub_pxeboot.cfg 
+    -O {{grub_outformat}}
+    -o {{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.core.0  
+    -p '(http,{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080)/' 
+    {{grub_modules}}
     
 - name: Generate Grub PXE Directory
   loop: "{{vm_hosts}}"

@@ -95,6 +95,7 @@
     name: "{{ item.vmname | default(item.hostname) }}"
     state: present
     datacenter: "{{ vcenter.datacenter }}"
+    template: "{{ hosts_defaults.template if (item.install_method | default(hosts_defaults.install_method) == 'template') else Null }}"
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
     disk:
       - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
@@ -153,6 +154,26 @@
   delegate_to: localhost
   register: deploy
 
+- name: Change virtual machine's boot order and related parameters
+  tags: vm
+  loop: "{{ vm_hosts }}"
+  vmware_guest_boot_manager:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    name: "{{ item.vmname | default(item.hostname) }}"
+    boot_delay: 2000
+    enter_bios_setup: False
+    boot_retry_enabled: True
+    boot_retry_delay: 10000
+    boot_firmware: bios
+    # secure_boot_enabled: False
+    boot_order:
+      - cdrom
+      - disk
+  delegate_to: localhost
+  register: vm_boot_order
 
 - name: Power on Machines
   tags: vm

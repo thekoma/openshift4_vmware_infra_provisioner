@@ -1,6 +1,8 @@
 - name: Delete Machines
   tags: vm
   loop: "{{ vm_hosts }}"
+  when:
+    - not ocp_vm_cleanup_preserve_vm|bool
   vmware_guest:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -13,8 +15,9 @@
   delegate_to: localhost
   register: deploy
 
-
 - name: Delete PXE image
+  when:
+    - not ocp_vm_cleanup_preserve_iso|bool
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -29,6 +32,8 @@
   register: ipxe_inuse
 
 - name: Delete local tmp and config files
+  when:
+    - not ocp_vm_cleanup_preserve_tmp|bool
   loop:
     - "{{playbook_dir}}/tmp"
   file:

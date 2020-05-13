@@ -14,6 +14,7 @@
       - "@Development tools"
       - coreutils
       - grub2-tools
+      - grub2-pc-modules
 
 - name: "Check if {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso exist"
   delegate_to: localhost
