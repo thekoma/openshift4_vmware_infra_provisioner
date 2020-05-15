@@ -2,4 +2,4 @@ net_del_addr pxe
 net_add_addr pxe pxe {{item.network.ip}}
 net_add_route default {{ item.network.gw |  default(hosts_defaults['network']['gw']) }}/{{ item.network.mask | default(hosts_defaults['network']['mask']) | ipaddr('prefix') }} pxe
 net_add_dns {{ item.network.dns[0] | default(hosts_defaults.network.dns[0]) }}
-configfile (http,{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080)/grub.cfg
+configfile (http,{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080)/{{item.hostname}}/grub.cfg

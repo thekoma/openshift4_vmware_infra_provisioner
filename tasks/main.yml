@@ -13,6 +13,7 @@
 
 - name: Prepare WebServer
   when: 
+    - hosts_defaults.install_method != 'template'
     - not checks_only|bool
     - not ocp_vm_cleanup|bool
     - ocp_vm_create_webserver
@@ -36,6 +37,7 @@
 
 - name: Create PXE Image
   when: 
+    - hosts_defaults.install_method != 'template'
     - not checks_only|bool
     - not ocp_vm_cleanup|bool
     - ocp_vm_create_ipxe
@@ -47,6 +49,7 @@
 
 - name: Create Grub Loaders
   when: 
+    - hosts_defaults.install_method == 'grub'
     - not checks_only|bool
     - not ocp_vm_cleanup|bool
     - ocp_vm_create_grub
@@ -64,6 +67,15 @@
   tags: 
     - installer
   include_tasks: 40-installer.yml
+
+- name: transpile ignition
+  when: 
+    - not ocp_vm_cleanup|bool
+    - not checks_only|bool
+    - ocp_vm_transpile|bool
+  tags: 
+    - transpile
+  include_tasks: 41-transpile.yml
 
 - name: Create VMS
   when: 

@@ -1,0 +1,105 @@
+---    
+
+- name: Install Ansible's vmware_guest required libraryes
+  delegate_to: localhost
+  yum:
+    name: 
+      - python3-requests
+      - python3-pip
+      - python3-magic
+    state: present
+
+
+- name: Fetch ipxe source filetranspiler
+  delegate_to: localhost
+  git:
+    repo: https://github.com/ashcrow/filetranspiler
+    dest: "{{playbook_dir}}/tmp/src/filetranspiler"
+    force: yes
+
+- name: Cleanup first Create structure per machines
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  file:
+    state: absent
+    path: "{{playbook_dir}}/tmp/transpiling"
+  delegate_to: localhost
+
+- name: Create structure per machines
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  file:
+    state: directory
+    recurse: true
+    path: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/sysconfig/network-scripts"
+  delegate_to: localhost
+
+- name: Create structure per machines
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  file:
+    state: directory
+    recurse: true
+    path: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/NetworkManager/system-connections"
+  delegate_to: localhost
+  
+
+- name: Create Hostname
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  copy:
+    mode: 0644
+    content: "{{item.hostname}}"
+    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/hostname"
+  delegate_to: localhost
+
+- name: Create Resolv
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  template:
+    mode: 0644
+    src: resolv.conf.j2
+    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/resolv.conf"
+  delegate_to: localhost
+
+- name: Create interface (old)
+  when: hosts_defaults.install_type != 'fedoracos'
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  template:
+    mode: 0600    
+    src: ifcfg.conf.j2
+    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/sysconfig/network-scripts/ifcfg-{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}"
+  delegate_to: localhost
+
+- name: Create interface (new)
+  when: hosts_defaults.install_type != 'rhcos'
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  template:
+    mode: 0600
+    src: nmconnection.j2
+    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/NetworkManager/system-connections/{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}.nmconnection"
+  delegate_to: localhost
+
+- name: Run transpiler
+  tags: filetranspiler
+  loop: "{{ vm_hosts }}"
+  shell: >
+    {{playbook_dir}}/tmp/src/filetranspiler/filetranspile 
+    -i {{playbook_dir}}/tmp/cluster_conf/{{item.type}}.ign
+    -f {{playbook_dir}}/tmp/transpiling/{{item.hostname}}
+    -o {{playbook_dir}}/tmp/{{item.hostname}}.ign
+  delegate_to: localhost
+
+- set_fact:
+    ign: "{{ ign | combine( { item.hostname: lookup('file', playbook_dir + '/tmp/' + item.hostname + '.ign')| string | b64encode } ) }}"
+  loop: "{{ vm_hosts }}"
+
+- name: Copy Bootstrap in web server
+  loop: "{{vm_hosts}}"
+  when: 
+    - "'webserver' in group_names"
+  copy:
+    src: "{{playbook_dir}}/tmp/{{item.hostname}}.ign"
+    dest: "/usr/share/nginx/html/{{item.hostname}}.ign"

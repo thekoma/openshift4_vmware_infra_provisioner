@@ -5,19 +5,12 @@
     path: "{{playbook_dir}}/tmp/grubcfg"
     state: directory
 
-- name: Create Grub Config Dir
-  delegate_to: localhost
-  file:
-    path: "{{playbook_dir}}/tmp/grubcfg"
-    state: directory
-
 - name: Generate Grub PXE Loader
   loop: "{{vm_hosts}}"
   delegate_to: localhost
   template:
     src: "grub.cfg.j2"
     dest: "{{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.grub.cfg"
-
 
 - name: Generate Grub PXE Loader Configuration
   loop: "{{vm_hosts}}"
@@ -26,6 +19,13 @@
     src: "grub_pxeboot.cfg.j2"
     dest: "{{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.grub_pxeboot.cfg"
 
+- name: Generate Grub PXE Directory
+  loop: "{{vm_hosts}}"
+  when: 
+    - "'webserver' in group_names"
+  file:
+    state: absent
+    path:  /usr/share/nginx/html/{{item.hostname}}
 
 - name: Generate Grub PXE Directory
   loop: "{{vm_hosts}}"
@@ -44,8 +44,8 @@
     -O {{grub_outformat}}
     -o {{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.core.0  
     -p '(http,{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080)/' 
-    {{grub_modules}}
-    
+    {{grub_modules}}  
+  
 - name: Generate Grub PXE Directory
   loop: "{{vm_hosts}}"
   when: 
@@ -55,9 +55,10 @@
     dest: "/usr/share/nginx/html/{{item.hostname}}/core.0"
 
 
-
-
-
-
-
-#    grub2-mkimage -c /etc/ansible/tmp/grubcfg/env.cfg  -O i386-pc-pxe -o /usr/share/nginx/html/core.0  -p '(http,192.168.168.186)/' ls http echo cbfs reboot normal boot configfile extcmd search net test loadenv serial blscfg serial
+- name: Generate final Grub.cfg
+  loop: "{{vm_hosts}}"
+  when: 
+    - "'webserver' in group_names"
+  copy:
+    src: "{{playbook_dir}}/tmp/grubcfg/{{item.hostname}}.grub.cfg"
+    dest: "/usr/share/nginx/html/{{item.hostname}}/grub.cfg"

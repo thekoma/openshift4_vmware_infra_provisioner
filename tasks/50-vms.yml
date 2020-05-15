@@ -1,7 +1,5 @@
 # ansible-configured
 ---
-
-
 - name: Install Ansible's vmware_guest required libraryes
   delegate_to: localhost
   yum:
@@ -17,6 +15,9 @@
       - PyVmomi
 
 - name: Create Directory in Datastore to host iPXE
+  when: 
+    - hosts_defaults.install_method != 'template'
+    - ocp_vm_create_ipxe
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -30,6 +31,9 @@
   ignore_errors: yes
 
 - name: "Query a ipxe iso file on a datastore {{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
+  when: 
+    - hosts_defaults.install_method != 'template'
+    - ocp_vm_create_ipxe
   vsphere_file:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -43,8 +47,11 @@
   ignore_errors: yes
   register: ipxe_inuse
 
-- name: Copy file to datastore
-  when: ipxe_inuse.state == 'absent'
+- name: Copy ISO to datastore
+  when: 
+    - ipxe_inuse.state|default('present') == 'absent'
+    - ocp_vm_create_ipxe
+    - hosts_defaults.install_method != 'template'
   vsphere_copy:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -82,6 +89,21 @@
   register: vm_folder_creation_result
   delegate_to: localhost
 
+- set_fact:
+    ign_bootstrap: "{{ lookup('file', playbook_dir + '/tmp/cluster_conf/bootstrap.ign') | string | b64encode }}"
+    ign_master: "{{ lookup('file', playbook_dir + '/tmp/cluster_conf/master.ign') | string | b64encode }}"
+    ign_worker: "{{ lookup('file', playbook_dir + '/tmp/cluster_conf/worker.ign') | string | b64encode }}"
+
+- set_fact:
+    ign: "{{ ign | combine( { item.type: item.ign } ) }}"
+  with_items:
+    - type: master
+      ign: "{{ign_master}}"
+    - type: bootstrap
+      ign: "{{ign_bootstrap}}"
+    - type: worker
+      ign: "{{ign_worker}}"
+
 - name: Create a virtual machine from a template
   tags: vm
   loop: "{{ vm_hosts }}"
@@ -95,12 +117,13 @@
     name: "{{ item.vmname | default(item.hostname) }}"
     state: present
     datacenter: "{{ vcenter.datacenter }}"
-    template: "{{ hosts_defaults.template if (item.install_method | default(hosts_defaults.install_method) == 'template') else Null }}"
+    template: "{{ omit if hosts_defaults.install_method == 'netinstall' else hosts_defaults.template }}"
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
     disk:
       - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
         type: "{{ item.disktype | default(hosts_defaults[item.type]['disktype'])| default('thin') }}"
         datastore:  "{{ vcenter.datastore }}"
+
     hardware:
       nested_virt: "{{ item.nested_virt | default(hosts_defaults[item.type]['nested_virt']) }}"
       memory_mb: "{{ item.memory_mb | default(hosts_defaults[item.type]['memory_mb']) }}"
@@ -109,54 +132,100 @@
       mem_reservation: "{{ '0' if not enable_reservation else (item.memory_mb | default(hosts_defaults[item.type]['memory_mb'])) }}"
       memory_reservation_lock: "{{ 'True' if enable_reservation else 'False' }}"
       cpu_reservation: "{{ '0' if not enable_reservation else (vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']))) }}"
+
     cdrom:
-      type: iso
-      iso_path: "{{ item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
+      type:     "{{ 'none' if hosts_defaults.install_method == 'template' else 'iso' }}"
+      iso_path: "{{ omit   if hosts_defaults.install_method == 'template' else item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
+
     customvalues:
-      - key: guestinfo.ipxe.hostname
-        value: "{{ item.hostname }}"
-      - key: guestinfo.ipxe.ignition
-        value: "{{ item.ignition | default(hosts_defaults[item.type]['ignition']) }}"
-      - key: guestinfo.ipxe.net0.ip
-        value: "{{ item.network.ip }}"
-      - key: guestinfo.ipxe.net0.netmask
-        value: "{{ item.network.mask |  default(hosts_defaults.network.mask) }}"
-      - key: guestinfo.ipxe.net0.gateway
-        value: "{{ item.network.gw |  default(hosts_defaults.network.gw) }}"
-      - key: guestinfo.ipxe.fileserver
-        value: "http://{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] }}:8080"
-      - key: guestinfo.ipxe.dns
-        value: "{{ item.network.dns[0] |  default(hosts_defaults.network.dns[0]) | default(Null) }}"
-      - key: guestinfo.ipxe.dns1
-        value: "{{ item.network.dns[0] |  default(hosts_defaults.network.dns[0]) | default(Null) }}"
-      - key: guestinfo.ipxe.dns2
-        value: "{{ item.network.dns[1] |  default(hosts_defaults.network.dns[1]) | default(Null) }}"
-      - key: guestinfo.ipxe.dns3
-        value: "{{ item.network.dns[2] |  default(hosts_defaults.network.dns[2]) | default(Null) }}"
-      - key: guestinfo.ipxe.kernel-installer
-        value: "{{ item.kernelimg |  default(hosts_defaults.kernelimg) | default('kernel') }}"
-      - key: guestinfo.ipxe.initrd-installer
-        value: "{{ item.initramfs |  default(hosts_defaults.initramfs) | default('initramfs.img') }}"
-      - key: guestinfo.ipxe.rhcos-image
-        value: "{{ item.rhcosimage | default(hosts_defaults.rhcosimage) | default('rhcos.raw.gz') }}" 
-      - key: guestinfo.ipxe.disk
-        value: "{{ item.disk |  default(hosts_defaults['disk']) | default('sda') }}"
-      - key: guestinfo.ipxe.net_interface
-        value: "{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('ens192') }}"
-      - key: guestinfo.ipxe.menu_default
-        value: "{{ item.install_method |  default(hosts_defaults.install_method) }}"
+
+      # Values needed for Grub and Netinstall
+      # Set Hostname
+      - key:   guestinfo.ipxe.hostname
+        value: "{{item.hostname}}"
+
+      # Set ignition NameFile
+      - key:   guestinfo.ipxe.ignition
+        value: "{{item.hostname}}.ign"
+
+      # Set iPXE IP
+      - key:   guestinfo.ipxe.net0.ip
+        value: "{{item.network.ip}}"
+
+      # Set iPXE mask
+      - key:   guestinfo.ipxe.net0.netmask
+        value: "{{item.network.mask | default(hosts_defaults.network.mask)}}"
+      
+      # Set iPXE Gw
+      - key:   guestinfo.ipxe.net0.gateway
+        value: "{{item.network.gw | default(hosts_defaults.network.gw)}}"
+
+      # Set iPXE fileserver
+      - key:   guestinfo.ipxe.fileserver
+        value: "http://{{hosts_defaults.webserver | default(hostvars[ groups.webserver[0] ]['ansible_fqdn'])}}:8080"
+
+      # Set DNS
+      - key:   guestinfo.ipxe.dns
+        value: "{{item.network.dns[0] | default(hosts_defaults.network.dns[0])}}"
+
+      - key:   guestinfo.ipxe.dns1
+        value: "{{item.network.dns[0] | default(hosts_defaults.network.dns[0])}}"
+
+      - key:   guestinfo.ipxe.dns2
+        value: "{{item.network.dns[1] | default(hosts_defaults.network.dns[1]) | default(omit)}}"
+
+      - key:   guestinfo.ipxe.dns3
+        value: "{{item.network.dns[2] | default(hosts_defaults.network.dns[2]) | default(omit)}}"
+
+        
+      - key:   guestinfo.ipxe.kernel-installer
+        value: "{{item.kernelimg | default(hosts_defaults.kernelimg) | default('kernel')}}"
+
+      - key:   guestinfo.ipxe.initrd-installer
+        value: "{{item.initramfs | default(hosts_defaults.initramfs) | default('initramfs.img')}}"
+
+      - key:   guestinfo.ipxe.rhcos-image
+        value: "{{item.rhcosimage | default(hosts_defaults.rhcosimage) | default('rhcos.raw.gz') }}"
+        
+
+      - key:   guestinfo.ipxe.disk
+        value: "{{item.disk | default(hosts_defaults['disk']) | default('/dev/sda') }}"
+        
+      - key:   guestinfo.ipxe.net_interface
+        value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default('eth0')}}"
+        
+      - key:   guestinfo.ipxe.menu_default
+        value: "{{item.install_method | default(hosts_defaults.install_method)}}"
+        
+
+
+      # # Values needed for Template or Grub mode
+      - key:   guestinfo.ignition.config.data
+        value: "{{item.ignition | default(ign[item.hostname]) | default(ign[item.type])}}"
+
+      - key:   guestinfo.ignition.config.data.encoding
+        value: base64
+
+      # Values always needed  
       - key: disk.EnableUUID
         value: "TRUE"
       - key: sched.cpu.latencySensitivity
         value: "{{ 'high' if enable_reservation else 'normal' }}"
+    
     networks:
-    - name: "{{ item.network.name |  default(hosts_defaults['network']['name']) }}"
+      - name: "{{ item.network.name | default(hosts_defaults['network']['name']) }}"
+        mac: "{{ item.network.mac | default(omit)}}"
+
   delegate_to: localhost
   register: deploy
 
-- name: Change virtual machine's boot order and related parameters
+- debug:
+    msg: "{{deploy}}"
+
+- name: When we need to use iPXE or grub we should boot from cdrom the first time
   tags: vm
   loop: "{{ vm_hosts }}"
+  when: hosts_defaults.install_method != 'template'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -168,10 +237,9 @@
     boot_retry_enabled: True
     boot_retry_delay: 10000
     boot_firmware: bios
-    # secure_boot_enabled: False
-    boot_order:
-      - cdrom
-      - disk
+    boot_order: 
+      - 'cdrom'
+      - 'disk'
   delegate_to: localhost
   register: vm_boot_order
 
@@ -188,3 +256,24 @@
     datacenter: "{{ vcenter.datacenter }}"
   delegate_to: localhost
   register: deploy  
+
+- name: Now we can revert to disk as we should have correctly booted and written on disk
+  tags: vm
+  loop: "{{ vm_hosts }}"
+  when: hosts_defaults.install_method != 'template'
+  vmware_guest_boot_manager:
+    hostname: "{{ vcenter.host }}"
+    username: "{{ vcenter.user }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: "{{ vcenter.validate_certs }}"
+    name: "{{ item.vmname | default(item.hostname) }}"
+    boot_delay: 2000
+    enter_bios_setup: False
+    boot_retry_enabled: True
+    boot_retry_delay: 10000
+    boot_firmware: bios
+    boot_order: 
+      - 'disk'
+      - 'cdrom'
+  delegate_to: localhost
+  register: vm_boot_order

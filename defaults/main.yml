@@ -1,6 +1,5 @@
 # ansible-configured
 ---
-
 ocp_vm_cleanup: false               # Cleanup Mode. Use with caution I don't request confirmation
 ocp_vm_cleanup_preserve_vm: False   # Preserver VMs when Clenup mode is engaged.
 ocp_vm_cleanup_preserve_tmp: False  # Preserver tmp folder when Clenup mode is engaged.
@@ -12,6 +11,7 @@ ocp_vm_create_haproxy: True         # Enable/Disable this portion of role
 ocp_vm_create_ipxe: True            # Enable/Disable this portion of role
 ocp_vm_create_grub: True            # Enable/Disable this portion of role
 ocp_vm_prepare_installer: True      # Enable/Disable this portion of role
+ocp_vm_transpile: True              # Enable/Disable this portion of role
 ocp_vm_create_vm: True              # Enable/Disable this portion of role
 ocp_vm_install_client: True         # Enable/Disable this portion of role
 enable_reservation: True            # For production environment you should enavle this
@@ -88,75 +88,77 @@ grub_modules: >-
   xfs
 
 vcenter:
-    host: vcenter.vsphere.local       # vcenter's hostname
-    user: administrator@vsphere.local # vcenter's username
-    password: password                # vcenter's password
-    datacenter: datacenter01          # datacenter to use
-    folder: /OKD                      # Where to place VM in vcenter
-    validate_certs: no                # Validate vcenter's certificate
-    datastore: "datastore01"          # Where to create VM
+  host: vcenter.vsphere.local       # vcenter's hostname
+  user: administrator@vsphere.local # vcenter's username
+  password: password                # vcenter's password
+  datacenter: datacenter01          # datacenter to use
+  folder: /OKD                      # Where to place VM in vcenter
+  validate_certs: no                # Validate vcenter's certificate
+  datastore: "datastore01"          # Where to create VM
 
 ocp_installer:
-    basedomain: lab.local             # Base domain
-    clustername: okd01                # The cluster name (prepend on basedomain)
-    pullsecret: FILLME                # Pull secret from https://cloud.openshift.com
-    sshkey: FILLME                    # SSH Key to be installed to login with user core on machines
-    # You should find everything you need around there: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
-    kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
-    initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
-    rhcosimage: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
-    installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
-    clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+  basedomain: lab.local             # Base domain
+  clustername: okd01                # The cluster name (prepend on basedomain)
+  pullsecret: FILLME                # Pull secret from https://cloud.openshift.com
+  sshkey: FILLME                    # SSH Key to be installed to login with user core on machines
+  # You should find everything you need around there: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
+  kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
+  initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
+  rhcosimage: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
+  installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
+  clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
 
 hosts_defaults:
-    # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
-    # install_method: netinstall
-    install_method: netinstall # [ netinstall | template ]
-    template: "rhcos-4.4.3-x86_64-vmware.x86_64"
-    iso: "pxe.iso"                
-    # Network configuration
-    network:
-      name: MyNetWork
-      mask: 255.255.255.0
-      gw: 192.168.0.1
-      dns:  # Max 3
-          - 192.168.0.2
-          - 192.168.0.3
-    # Kind of nodes. Those are the default values so that you shouldn't have to
-    # repeat them for every node. But you can override them. All those values are Required.
-    generic:
-      nested_virt: False
-      memory_mb: 16384
-      num_cpus: 4
-      num_cpu_cores_per_socket: 1
-      disk: 120
-      guest_id: other4xLinux64Guest
-      ignition: none
-    master:
-      nested_virt: True
-      memory_mb: 16384
-      num_cpus: 4
-      num_cpu_cores_per_socket: 1
-      disk: 120
-      guest_id: coreos64Guest
-      ignition: master.ign
-    bootstrap:
-      nested_virt: False
-      memory_mb: 16384
-      num_cpus: 4
-      num_cpu_cores_per_socket: 1
-      disk: 120
-      guest_id: coreos64Guest
-      ignition: bootstrap.ign
-    worker:
-      nested_virt: True
-      memory_mb: 8192
-      num_cpus: 4
-      num_cpu_cores_per_socket: 1
-      mem_limit: 8192
-      disk: 120
-      guest_id: coreos64Guest
-      ignition: worker.ign
+  # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
+  # install_method: netinstall
+  install_method: template # [ netinstall | template | grub ]
+  # install_method: netinstall
+  install_type: fedoracos # fedoracos | rhcos
+  template: "rhcos-4.4.3-x86_64-vmware.x86_64"
+  iso: "pxe.iso"                
+  # Network configuration
+  network:
+    name: MyNetWork
+    mask: 255.255.255.0
+    gw: 192.168.0.1
+    dns:  # Max 3
+        - 192.168.0.2
+        - 192.168.0.3
+  # Kind of nodes. Those are the default values so that you shouldn't have to
+  # repeat them for every node. But you can override them. All those values are Required.
+  generic:
+    nested_virt: False
+    memory_mb: 16384
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    disk: 120
+    guest_id: other4xLinux64Guest
+    ignition: none
+  master:
+    nested_virt: True
+    memory_mb: 16384
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    disk: 120
+    guest_id: coreos64Guest
+    ignition: master.ign
+  bootstrap:
+    nested_virt: False
+    memory_mb: 16384
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    disk: 120
+    guest_id: coreos64Guest
+    ignition: bootstrap.ign
+  worker:
+    nested_virt: True
+    memory_mb: 8192
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    mem_limit: 8192
+    disk: 120
+    guest_id: coreos64Guest
+    ignition: worker.ign
 
 vm_hosts:
     - hostname: master1.ocp.okd01.lab.local # Required

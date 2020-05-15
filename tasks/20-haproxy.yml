@@ -5,6 +5,12 @@
      - haproxy
      - python3-libsemanage
 
+- name: Enable Firewalld
+  service:
+    name: firewalld
+    enabled: yes
+    state: started
+
 - name: enable services on firewall
   loop:
     - http

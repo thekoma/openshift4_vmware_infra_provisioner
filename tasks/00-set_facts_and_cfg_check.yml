@@ -27,9 +27,34 @@
     - hosts_defaults.network.gw is undefined
     - hosts_defaults.network.dns[0] is undefined
 
-- name: Check how many servers are in group webserver
-  fail:
-    msg: 
-      - "You Should have at least one webserver."
-  when: 
-    - groups.webserver| list | count != 1
+# - name: Check how many servers are in group webserver
+#   fail:
+#     msg: 
+#       - "You Should have at least one webserver."
+#   when: 
+#     - groups.webserver| list | count == 0
+
+
+# Pause to get some sensitive input.
+- name: I need at least one webserver
+  when: groups.webserver| list | count == 0
+  block:
+    - name: Prompt for a choise
+      pause:
+        prompt: "      You have specified no server in webserver group.\n      I need at least a reachable webserver.\n      I will use myself (the host running this playbook) as one. \n      Reply yes if you wish to continue"
+        echo: Yes
+      register: reply
+      delegate_to: localhost
+
+    - name: Check reply
+      when: reply.user_input|lower != 'yes'
+      fail:
+        msg: "Failing as requested"
+
+
+    # add localhost to webservers if none is provided
+    - name: Add host to group 'webservers' if none is provided
+      delegate_to: localhost
+      add_host:
+        name: "{{ansible_fqdn}}"
+        groups: webserver

@@ -1,0 +1,12 @@
+TYPE=Ethernet
+BOOTPROTO=none
+NAME={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}
+DEVICE={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}
+ONBOOT=yes
+IPADDR={{ item.network.ip }}
+NETMASK={{ item.network.mask | default(hosts_defaults.network.mask) }}
+GATEWAY={{ item.network.gw |  default(hosts_defaults.network.gw) }}
+{% for dns in item.network.dns | default(hosts_defaults.network.dns)  %}
+DNS{{loop.index}}={{dns}}
+{% endfor %}
+MTU=1500

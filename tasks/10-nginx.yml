@@ -4,6 +4,12 @@
     name:
      - nginx
 
+- name: Enable Firewalld
+  service:
+    name: firewalld
+    enabled: yes
+    state: started
+
 - name: enable Ports on firewall
   loop:
       - 8080/tcp

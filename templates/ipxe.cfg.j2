@@ -14,7 +14,7 @@ item --gap --             initrd=${fileserver}/${initrd-installer}
 item --gap --             ip: ${net0/ip} gw: ${net0/gateway} mask:${net0/netmask}
 item --gap --             Hostname: ${hostname}
 item --gap --             Interface: ${net_interface}
-item --gap --             DNS: {%- for dns in hosts_defaults.network.dns %}${dns{{loop.index }}} {%- endfor %} 
+item --gap --             DNS: {%- for dns in hosts_defaults.network.dns %} ${dns{{loop.index }}} {%- endfor %} 
 item --gap --             install_dev: ${disk} 
 item --gap --             image_url: ${fileserver}/${rhcos-image} 
 item --gap --             ignition_url: ${fileserver}/${ignition}

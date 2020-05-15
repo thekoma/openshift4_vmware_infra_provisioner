@@ -1,0 +1,19 @@
+[connection]
+type=ethernet
+interface-name={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}
+
+{% if item.network.mac is defined %}
+[ethernet]
+mac-address={{item.network.mac|default(Null)}}
+{% endif %}
+
+[ipv4]
+method=manual
+addresses={{ item.network.ip }}/{{ item.network.mask | default(hosts_defaults.network.mask) }}
+gateway={{ item.network.gw |  default(hosts_defaults.network.gw) }}
+dns={% for dns in item.network.dns | default(hosts_defaults.network.dns) %}{{dns}};{%- endfor %}
+
+dns-search={{ocp_installer.clustername}}.{{ocp_installer.basedomain}}
+
+
+   
