@@ -46,6 +46,16 @@ Role Variables
 echo defaults/main.yml
 ```
 
+Supported methods
+------------
+| Name  | Require OVA| Require DHCP    | Require WebServer  | Need ISO |  Support FCOS | Support RHCOS | Support Baremetal | Description  |
+|---|---|---|---|---|---|---|---|---|
+| grub   |  ✅ | 🚫  |  ✅  | ✅| ✅  | ✅  | 🚫 | I will generate a iPXE iso and chainload once a grub pxe to inject IP parameters. |
+| template   |  ✅ | ✅*  | 🚫  |🚫  | ✅  | ✅  | 🚫 | I will generate and inject an ignition and use the ova template for vmware installation The DHCP is needed for the image to start but the injected parameters in ignition will fix them at first reboot. |
+| netinstall   | 🚫|  🚫|  ✅  |  ✅   | ✅  | ✅| 🚫 | I will install the OS via network and inject the ip via kernel parameters |
+
+*In the template mode you need dhcp at first boot because of a bug in coreos/rhcos <br>See [GitHub Issue](https://github.com/coreos/fedora-coreos-tracker/issues/358) and [Fedora COS Docs](https://docs.fedoraproject.org/en-US/fedora-coreos/static-ip-config/)
+
 Dependencies
 ------------
 
