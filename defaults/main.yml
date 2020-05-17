@@ -92,7 +92,7 @@ vcenter:
   user: administrator@vsphere.local # vcenter's username
   password: password                # vcenter's password
   datacenter: datacenter01          # datacenter to use
-  folder: /OKD                      # Where to place VM in vcenter
+  folder: OKD                      # Where to place VM in vcenter
   validate_certs: no                # Validate vcenter's certificate
   datastore: "datastore01"          # Where to create VM
 

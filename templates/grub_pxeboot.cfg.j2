@@ -1,3 +1,4 @@
+
 net_del_addr pxe
 net_add_addr pxe pxe {{item.network.ip}}
 net_add_route default {{ item.network.gw |  default(hosts_defaults['network']['gw']) }}/{{ item.network.mask | default(hosts_defaults['network']['mask']) | ipaddr('prefix') }} pxe

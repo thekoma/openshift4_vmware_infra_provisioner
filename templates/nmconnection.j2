@@ -4,14 +4,17 @@ interface-name={{ item.network.interface |  default(hosts_defaults['network']['i
 
 {% if item.network.mac is defined %}
 [ethernet]
-mac-address={{item.network.mac|default(Null)}}
+mac-address={{item.network.mac|default(omit)}}
 {% endif %}
 
 [ipv4]
 method=manual
 addresses={{ item.network.ip }}/{{ item.network.mask | default(hosts_defaults.network.mask) }}
 gateway={{ item.network.gw |  default(hosts_defaults.network.gw) }}
-dns={% for dns in item.network.dns | default(hosts_defaults.network.dns) %}{{dns}};{%- endfor %}
+dns=
+{%- for dns in item.network.dns | default(hosts_defaults.network.dns) %}
+{{dns}}{%- if loop.index < loop.length %};{%- endif %}
+{%- endfor %}
 
 dns-search={{ocp_installer.clustername}}.{{ocp_installer.basedomain}}
 

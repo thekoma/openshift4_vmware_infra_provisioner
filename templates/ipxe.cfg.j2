@@ -19,10 +19,12 @@ item --gap --             install_dev: ${disk}
 item --gap --             image_url: ${fileserver}/${rhcos-image} 
 item --gap --             ignition_url: ${fileserver}/${ignition}
 item --gap --             grub.cfg: ${fileserver}/${hostname}/core.0
-item --gap --             ------------------------- Options ------------------------------
-item --key n netinstall   Install CoreOS via Netinstall (iPXE)
-item --key t template     Install CoreOS via Template   (Grub)
-item --key l loadcustom   Chainload Custom script
+item --gap --             ------------------------- Install Options ----------------------
+item --key n netinstall   Install CoreOS via Netinstall
+item --key g grub         Install CoreOS via Grub editing
+item --gap --             ------------------------- Alternate Options --------------------
+item --gap --             Custom script ${fileserver}/custom.ipxe 
+item --key l loadcustom   Chainload Custom script 
 item --gap --             ------------------------- Advanced options ---------------------
 item --key c config       Configure settings
 item --key s shell        Drop to iPXE shell
@@ -35,12 +37,15 @@ goto ${selected}
 
 :netinstall
 ifopen net0
-kernel ${fileserver}/${kernel-installer} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none {%- for dns in hosts_defaults.network.dns %} nameserver=${dns{{loop.index }}}{%- endfor %} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition}
+kernel ${fileserver}/${kernel-installer} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none
+{%- for dns in item.network.dns | default(hosts_defaults.network.dns) %}
+{{dns}}{%- if loop.index < loop.length %}:{%- endif %}
+{%- endfor %}
 initrd ${fileserver}/${initrd-installer}
 boot || goto failed
 goto start
 
-:template
+:grub
 ifopen net0
 chain --autofree ${fileserver}/${hostname}/core.0 || goto failed
 
@@ -49,7 +54,7 @@ echo Booting failed, dropping to shell
 goto shell
 
 :loadcustom
-chain --autofree ${fileserver}/loadcustom.ipxe || goto failed
+chain --autofree ${fileserver}/custom.ipxe || goto failed
 
 :reboot
 reboot

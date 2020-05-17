@@ -54,6 +54,7 @@
   delegate_to: localhost
 
 - name: Create Resolv
+  when: hosts_defaults.install_type != 'fedoracos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   template:

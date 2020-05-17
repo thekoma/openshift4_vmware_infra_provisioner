@@ -1,3 +1,4 @@
-{%- for dns in item.network.dns | default(hosts_defaults.network.dns)  %} 
+search {{ocp_installer.clustername}}.{{ocp_installer.basedomain}}
+{% for dns in item.network.dns | default(hosts_defaults.network.dns)  %} 
 nameserver={{dns}} 
 {%- endfor %}
