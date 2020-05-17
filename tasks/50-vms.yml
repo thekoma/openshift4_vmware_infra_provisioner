@@ -135,7 +135,7 @@
 
     cdrom:
       type:     "{{ 'none' if hosts_defaults.install_method == 'template' else 'iso' }}"
-      iso_path: "{{ omit   if hosts_defaults.install_method == 'template' else item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
+      iso_path: "{{ omit if hosts_defaults.install_method == 'template' else item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
 
     customvalues:
 
@@ -200,10 +200,10 @@
 
 
       # # Values needed for Template or Grub mode
-      - key:   guestinfo.ignition.config.data
+      - key:   "{{ 'guestinfo.ignition.config.data_disabled' if hosts_defaults.install_method == 'template' else 'guestinfo.ignition.config.data' }}" 
         value: "{{item.ignition | default(ign[item.hostname]) | default(ign[item.type])}}"
 
-      - key:   guestinfo.ignition.config.data.encoding
+      - key:   "{{ 'guestinfo.ignition.config.data.encoding_disabled' if hosts_defaults.install_method == 'template' else 'guestinfo.ignition.config.data.encoding' }}" 
         value: base64
 
       # Values always needed  

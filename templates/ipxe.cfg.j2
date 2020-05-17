@@ -37,10 +37,11 @@ goto ${selected}
 
 :netinstall
 ifopen net0
-kernel ${fileserver}/${kernel-installer} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none
+kernel ${fileserver}/${kernel-installer} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0  coreos.inst.insecure coreos.inst.platform_id=metal coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none:
 {%- for dns in item.network.dns | default(hosts_defaults.network.dns) %}
 {{dns}}{%- if loop.index < loop.length %}:{%- endif %}
 {%- endfor %}
+
 initrd ${fileserver}/${initrd-installer}
 boot || goto failed
 goto start
