@@ -26,7 +26,6 @@ grub_modules: >-
   biosdisk
   blscfg
   boot
-  btrfs
   bufio
   cat
   cbfs
@@ -38,7 +37,6 @@ grub_modules: >-
   echo
   ext2
   extcmd
-  fat
   font
   fshelp
   gcry_crc
@@ -47,7 +45,6 @@ grub_modules: >-
   gfxterm
   gzio
   halt
-  hfsplus
   http
   iso9660
   jpeg
@@ -56,17 +53,12 @@ grub_modules: >-
   ls
   lspci
   lvm
-  mdraid09
-  mdraid1x
   minicmd
   nativedisk
   net
   normal
-  part_apple
   part_gpt
   part_msdos
-  password_pbkdf2
-  png
   priority_queue
   probe
   pxe
@@ -77,7 +69,6 @@ grub_modules: >-
   search_fs_file
   search_fs_uuid
   search_label
-  serial
   sleep
   syslinuxcfg
   terminal
