@@ -53,5 +53,5 @@
 
 - name: Download RHCOS image  netinstall
   get_url:
-    url: "{{ ocp_installer.rhcosimage }}"
+    url: "{{ ocp_installer.coreos_image }}"
     dest: /usr/share/nginx/html/rhcos.raw.gz

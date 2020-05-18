@@ -59,7 +59,7 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"
-    src: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+    src: "{{playbook_dir}}/tmp/iso/coreos_ipxe.iso"
     path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
   delegate_to: localhost
 
@@ -184,8 +184,8 @@
       - key:   guestinfo.ipxe.initrd-installer
         value: "{{item.initramfs | default(hosts_defaults.initramfs) | default('initramfs.img')}}"
 
-      - key:   guestinfo.ipxe.rhcos-image
-        value: "{{item.rhcosimage | default(hosts_defaults.rhcosimage) | default('rhcos.raw.gz') }}"
+      - key:   guestinfo.ipxe.coreos-image
+        value: "{{item.coreos_image | default(hosts_defaults.coreos_image) | default('rhcos.raw.gz') }}"
         
 
       - key:   guestinfo.ipxe.disk
