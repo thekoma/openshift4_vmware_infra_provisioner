@@ -54,7 +54,7 @@
   delegate_to: localhost
 
 - name: Create Resolv
-  when: hosts_defaults.install_type != 'fedoracos'
+  when: ocp_installer.install_type != 'fedoracos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   template:
@@ -64,23 +64,23 @@
   delegate_to: localhost
 
 - name: Create interface (old)
-  when: hosts_defaults.install_type != 'fedoracos'
+  when: ocp_installer.install_type != 'fedoracos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   template:
     mode: 0600    
     src: ifcfg.conf.j2
-    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/sysconfig/network-scripts/ifcfg-{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}"
+    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/sysconfig/network-scripts/ifcfg-{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default(os_interface) }}"
   delegate_to: localhost
 
 - name: Create interface (new)
-  when: hosts_defaults.install_type != 'rhcos'
+  when: ocp_installer.install_type != 'rhcos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   template:
     mode: 0600
     src: nmconnection.j2
-    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/NetworkManager/system-connections/{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}.nmconnection"
+    dest: "{{playbook_dir}}/tmp/transpiling/{{item.hostname}}/etc/NetworkManager/system-connections/{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default(os_interface) }}.nmconnection"
   delegate_to: localhost
 
 - name: Run transpiler

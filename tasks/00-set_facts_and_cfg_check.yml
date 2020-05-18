@@ -17,6 +17,11 @@
     - (vm_hosts | selectattr("type", "equalto", "worker") | list | count) < 1
 
 
+- name: Set eventual interface value
+  set_fact:
+    os_interface: "{{ 'eth0' if ocp_installer.install_type == 'fedoracos' else 'ens192'}}"
+
+
 - name: Fail if not filled the network variables
   fail:
     msg: 

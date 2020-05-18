@@ -1,6 +1,6 @@
 [connection]
 type=ethernet
-interface-name={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}
+interface-name={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default(os_interface) }}
 
 {% if item.network.mac is defined %}
 [ethernet]

@@ -98,18 +98,19 @@ ocp_installer:
   rhcosimage: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
   installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
   clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+  install_type: rhcos # fedoracos | rhcos
 
 hosts_defaults:
   # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
   # install_method: netinstall
   install_method: template # [ netinstall | template | grub ]
   # install_method: netinstall
-  install_type: fedoracos # fedoracos | rhcos
   template: "rhcos-4.4.3-x86_64-vmware.x86_64"
   iso: "pxe.iso"                
   # Network configuration
   network:
     name: MyNetWork
+    # interface: (this value changes based on the OS in a dynamic way. Specifiy it only if you know what are you doing.)
     mask: 255.255.255.0
     gw: 192.168.0.1
     dns:  # Max 3

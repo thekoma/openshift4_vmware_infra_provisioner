@@ -1,7 +1,7 @@
 TYPE=Ethernet
 BOOTPROTO=none
-NAME={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}
-DEVICE={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('eth0') }}
+NAME={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default(os_interface) }}
+DEVICE={{ item.network.interface |  default(hosts_defaults['network']['interface']) | default(os_interface) }}
 ONBOOT=yes
 IPADDR={{ item.network.ip }}
 NETMASK={{ item.network.mask | default(hosts_defaults.network.mask) }}

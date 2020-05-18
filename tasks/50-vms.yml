@@ -192,7 +192,7 @@
         value: "{{item.disk | default(hosts_defaults['disk']) | default('/dev/sda') }}"
         
       - key:   guestinfo.ipxe.net_interface
-        value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default('eth0')}}"
+        value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default(os_interface)}}"
         
       - key:   guestinfo.ipxe.menu_default
         value: "{{item.install_method | default(hosts_defaults.install_method)}}"
@@ -225,7 +225,7 @@
 - name: When we need to use iPXE or grub we should boot from cdrom the first time
   tags: vm
   loop: "{{ vm_hosts }}"
-  when: hosts_defaults.install_method != 'template'
+  when: hosts_defaults.install_method != 'netinstall'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -260,7 +260,7 @@
 - name: Now we can revert to disk as we should have correctly booted and written on disk
   tags: vm
   loop: "{{ vm_hosts }}"
-  when: hosts_defaults.install_method != 'template'
+  when: hosts_defaults.install_method != 'netinstall'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
