@@ -70,6 +70,7 @@
 
 - name: transpile ignition
   when: 
+    - hosts_defaults.install_method == 'template'
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
     - ocp_vm_transpile|bool
