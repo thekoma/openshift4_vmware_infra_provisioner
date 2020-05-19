@@ -197,6 +197,9 @@
       - key:   guestinfo.ipxe.menu_default
         value: "{{item.install_method | default(hosts_defaults.install_method)}}"
         
+      - key:   guestinfo.ipxe.node_type
+        value: "{{item.type}}"
+        
 
 
       # # Values needed for Template or Grub mode
@@ -244,6 +247,7 @@
   register: vm_boot_order
 
 - name: Power on Machines
+
   tags: vm
   loop: "{{ vm_hosts }}"
   vmware_guest:
@@ -252,7 +256,7 @@
     password: "{{ vcenter.password }}"
     validate_certs: "{{ vcenter.validate_certs }}"
     name: "{{ item.vmname | default(item.hostname) }}"
-    state: poweredon
+    state: "{{ocp_vm_power_state}}"
     datacenter: "{{ vcenter.datacenter }}"
   delegate_to: localhost
   register: deploy  

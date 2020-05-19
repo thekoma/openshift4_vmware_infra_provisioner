@@ -55,3 +55,9 @@
   get_url:
     url: "{{ ocp_installer.coreos_image }}"
     dest: /usr/share/nginx/html/rhcos.raw.gz
+
+- name: Download RHCOS image  netinstall signature
+  when: ocp_installer.install_type == 'fedoracos'
+  get_url:
+    url: "{{ ocp_installer.coreos_image }}.sig"
+    dest: /usr/share/nginx/html/rhcos.raw.gz.sig

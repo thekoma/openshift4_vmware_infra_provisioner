@@ -29,14 +29,18 @@ TODO:
 - ~~Create the VM~~
 - ~~Boot the vm injecting network configuration~~
 - ~~Install the cluster~~
+- ~~Calculate signature for fcos/rhcos~~
+- ~~Test all three methods with FCOS (OKD)~~ 
+- Test all three methods with RHCOS (Openshift)
+- Miltiple interfaces transpile
+- Determine and download images automatically and build a fetch url
+- Proxy implementation
 - Validate minimal requirements
 - Deploy VM for HaProxy and NginX
 - Build HA/Vrrp for HaProxy/NginX
-- Calculate signature for fcos/rhcos
-- Build fetch url
-- ~~Test all three methods with FCOS (OKD)~~ 
-- Test all three methods with RHCOS (Openshift)
-- Miltiple interfaces transpile -
+
+
+
 Requirements
 ------------
 

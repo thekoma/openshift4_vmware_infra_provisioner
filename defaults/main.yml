@@ -14,6 +14,7 @@ ocp_vm_prepare_installer: True      # Enable/Disable this portion of role
 ocp_vm_transpile: True              # Enable/Disable this portion of role
 ocp_vm_create_vm: True              # Enable/Disable this portion of role
 ocp_vm_install_client: True         # Enable/Disable this portion of role
+ocp_vm_power_state: poweredon
 enable_reservation: True            # For production environment you should enavle this
 cpu_biggest: 0                      # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
 dns_fail_is_not_fatal: False        # Ignore all DNS checks (You should nod ignore this kind of errors)

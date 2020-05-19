@@ -97,10 +97,10 @@
     ign: "{{ ign | combine( { item.hostname: lookup('file', playbook_dir + '/tmp/' + item.hostname + '.ign')| string | b64encode } ) }}"
   loop: "{{ vm_hosts }}"
 
-- name: Copy Bootstrap in web server
-  loop: "{{vm_hosts}}"
-  when: 
-    - "'webserver' in group_names"
-  copy:
-    src: "{{playbook_dir}}/tmp/{{item.hostname}}.ign"
-    dest: "/usr/share/nginx/html/{{item.hostname}}.ign"
+# - name: Copy Bootstrap in web server
+#   loop: "{{vm_hosts}}"
+#   when: 
+#     - "'webserver' in group_names"
+#   copy:
+#     src: "{{playbook_dir}}/tmp/{{item.hostname}}.ign"
+#     dest: "/usr/share/nginx/html/{{item.hostname}}.ign"
