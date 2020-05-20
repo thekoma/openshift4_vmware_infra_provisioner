@@ -105,7 +105,7 @@ ocp_installer:
 hosts_defaults:
   # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
   # install_method: netinstall
-  install_method: template # [ netinstall | template | grub ]
+  install_method: grub # [ netinstall | template | grub ]
   # install_method: netinstall
   template: "rhcos-4.4.3-x86_64-vmware.x86_64"
   iso: "pxe.iso"                

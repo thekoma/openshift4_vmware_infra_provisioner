@@ -189,7 +189,7 @@
         
 
       - key:   guestinfo.ipxe.disk
-        value: "{{item.disk | default(hosts_defaults.disk) | default('/dev/sda') }}"
+        value: "{{item.disk | default(hosts_defaults.disk) | default('sda') }}"
         
       - key:   guestinfo.ipxe.net_interface
         value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default(os_interface)}}"
