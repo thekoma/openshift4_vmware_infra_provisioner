@@ -185,11 +185,11 @@
         value: "{{item.initramfs | default(hosts_defaults.initramfs) | default('initramfs.img')}}"
 
       - key:   guestinfo.ipxe.coreos-image
-        value: "{{item.coreos_image | default(hosts_defaults.coreos_image) | default('rhcos.raw.gz') }}"
+        value: "{{item.coreos_image | default(hosts_defaults.coreos_image) | default('coreos_image.raw.gz') }}"
         
 
       - key:   guestinfo.ipxe.disk
-        value: "{{item.disk | default(hosts_defaults['disk']) | default('/dev/sda') }}"
+        value: "{{item.disk | default(hosts_defaults.disk) | default('/dev/sda') }}"
         
       - key:   guestinfo.ipxe.net_interface
         value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default(os_interface)}}"

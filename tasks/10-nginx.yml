@@ -44,20 +44,41 @@
 - name: Download bootstrap kernel for RHCOS netinstall
   get_url:
     url: "{{ ocp_installer.kernel }}"
-    dest: /usr/share/nginx/html/kernel
+    dest: "/usr/share/nginx/html/{{ ocp_installer.kernel | basename }}"
+    checksum: "{{'sha256:' + ocp_installer.coreos_sha256 if ocp_installer.coreos_sha256 is defined else omit }}"
+
+- name: Download bootstrap kernel for RHCOS netinstall
+  file:
+    dest: "/usr/share/nginx/html/kernel"
+    src: "/usr/share/nginx/html/{{ ocp_installer.kernel | basename }}"
+    state: link
 
 - name: Download bootstrap initrd for RHCOS netinstall
   get_url:
     url: "{{ ocp_installer.initrd }}"
-    dest: /usr/share/nginx/html/initramfs.img
+    dest: "/usr/share/nginx/html/{{ ocp_installer.initrd |basename}}"
+    checksum: "{{'sha256:' + ocp_installer.coreos_sha256 if ocp_installer.coreos_sha256 is defined else omit }}"
+
+- name: Download bootstrap initrd for RHCOS netinstall
+  file:
+    dest: "/usr/share/nginx/html/initramfs.img"
+    src: "/usr/share/nginx/html/{{ ocp_installer.initrd | basename }}"
+    state: link
 
 - name: Download RHCOS image  netinstall
   get_url:
     url: "{{ ocp_installer.coreos_image }}"
-    dest: /usr/share/nginx/html/rhcos.raw.gz
+    dest: "/usr/share/nginx/html/{{ ocp_installer.coreos_image | basename }}"
+    checksum: "{{'sha256:' + ocp_installer.coreos_sha256 if ocp_installer.coreos_sha256 is defined else omit }}"
+
+- name: Download bootstrap coreos_image.raw.gz for RHCOS netinstall
+  file:
+    dest: "/usr/share/nginx/html/coreos_image.raw.gz"
+    src: "/usr/share/nginx/html/{{ ocp_installer.coreos_image | basename }}"
+    state: link
 
 - name: Download RHCOS image  netinstall signature
   when: ocp_installer.install_type == 'fedoracos'
   get_url:
     url: "{{ ocp_installer.coreos_image }}.sig"
-    dest: /usr/share/nginx/html/rhcos.raw.gz.sig
+    dest: /usr/share/nginx/html/coreos_image.raw.gz.sig

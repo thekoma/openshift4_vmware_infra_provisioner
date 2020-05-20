@@ -43,13 +43,13 @@
 
 - name: Delete nginx Files
   when:
-    # - not ocp_vm_cleanup_preserve_tmp|bool
+    - not ocp_vm_cleanup_preserve_nginx|bool
     - "'webserver' in group_names"
   loop:
     - /usr/share/nginx/html/kernel
     - /usr/share/nginx/html/initramfs.img
-    - /usr/share/nginx/html/rhcos.raw.gz
-    - /usr/share/nginx/html/rhcos.raw.gz.sig
+    - /usr/share/nginx/html/coreos_image.raw.gz
+    - /usr/share/nginx/html/coreos_image.raw.gz.sig
     - /usr/share/nginx/html/master.ign
     - /usr/share/nginx/html/worker.ign
     - /usr/share/nginx/html/bootstrap.ign

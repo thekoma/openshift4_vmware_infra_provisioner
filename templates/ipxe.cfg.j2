@@ -40,7 +40,7 @@ ifopen net0
 kernel ${fileserver}/${kernel-installer} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst.platform_id=metal coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${coreos-image} coreos.inst.ignition_url=${fileserver}/${node_type}.ign ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none:
 {%- for dns in item.network.dns | default(hosts_defaults.network.dns) %}
 {{dns}}{%- if loop.index < loop.length %}:{%- endif %}
-{%- endfor %}
+{%- endfor %}{% for dns in item.network.dns | default(hosts_defaults.network.dns) %} nameserver={{dns}} {% endfor %}
 
 initrd ${fileserver}/${initrd-installer}
 boot || goto failed
