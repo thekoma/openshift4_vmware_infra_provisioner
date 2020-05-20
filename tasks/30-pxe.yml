@@ -16,13 +16,13 @@
       - grub2-tools
       - grub2-pc-modules
 
-- name: "Check if {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso exist"
+- name: "Check if {{playbook_dir}}/tmp/iso/coreos_ipxe.iso exist"
   delegate_to: localhost
   stat: 
-    path: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+    path: "{{playbook_dir}}/tmp/iso/coreos_ipxe.iso"
   register: ipxe_iso
 
-- name: Create rhcos_ipxe.iso
+- name: Create coreos_ipxe.iso
   delegate_to: localhost
   when: 
    - not ipxe_iso.stat.exists
@@ -146,7 +146,7 @@
         chdir: "{{playbook_dir}}/tmp/src/ipxe/src/"
         target: clean
 
-    - name: Build '{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso' target with extra arguments
+    - name: Build '{{playbook_dir}}/tmp/iso/coreos_ipxe.iso' target with extra arguments
       delegate_to: localhost
       make:
         chdir: "{{playbook_dir}}/tmp/src/ipxe/src/"
@@ -155,9 +155,9 @@
           NUM_THREADS: "{{ansible_processor_count}}"
           EMBED: "{{playbook_dir}}/tmp/iso/vmware.ipxe"
 
-    - name: "Copy produced ipxe iso in {{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+    - name: "Copy produced ipxe iso in {{playbook_dir}}/tmp/iso/coreos_ipxe.iso"
       delegate_to: localhost
       copy:
         src: "{{playbook_dir}}/tmp/src/ipxe/src/bin/ipxe.iso"
-        dest: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+        dest: "{{playbook_dir}}/tmp/iso/coreos_ipxe.iso"
 

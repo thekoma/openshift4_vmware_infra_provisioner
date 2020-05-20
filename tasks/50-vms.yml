@@ -59,7 +59,7 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"
-    src: "{{playbook_dir}}/tmp/iso/rhcos_ipxe.iso"
+    src: "{{playbook_dir}}/tmp/iso/coreos_ipxe.iso"
     path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
   delegate_to: localhost
 
@@ -184,26 +184,29 @@
       - key:   guestinfo.ipxe.initrd-installer
         value: "{{item.initramfs | default(hosts_defaults.initramfs) | default('initramfs.img')}}"
 
-      - key:   guestinfo.ipxe.rhcos-image
-        value: "{{item.rhcosimage | default(hosts_defaults.rhcosimage) | default('rhcos.raw.gz') }}"
+      - key:   guestinfo.ipxe.coreos-image
+        value: "{{item.coreos_image | default(hosts_defaults.coreos_image) | default('coreos_image.raw.gz') }}"
         
 
       - key:   guestinfo.ipxe.disk
-        value: "{{item.disk | default(hosts_defaults['disk']) | default('/dev/sda') }}"
+        value: "{{item.disk | default(hosts_defaults.disk) | default('/dev/sda') }}"
         
       - key:   guestinfo.ipxe.net_interface
-        value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default('eth0')}}"
+        value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default(os_interface)}}"
         
       - key:   guestinfo.ipxe.menu_default
         value: "{{item.install_method | default(hosts_defaults.install_method)}}"
         
+      - key:   guestinfo.ipxe.node_type
+        value: "{{item.type}}"
+        
 
 
       # # Values needed for Template or Grub mode
-      - key:   "{{ 'guestinfo.ignition.config.data_disabled' if hosts_defaults.install_method == 'template' else 'guestinfo.ignition.config.data' }}" 
+      - key:   "{{ 'guestinfo.ignition.config.data_disabled' if hosts_defaults.install_method == 'netinstall' else 'guestinfo.ignition.config.data' }}" 
         value: "{{item.ignition | default(ign[item.hostname]) | default(ign[item.type])}}"
 
-      - key:   "{{ 'guestinfo.ignition.config.data.encoding_disabled' if hosts_defaults.install_method == 'template' else 'guestinfo.ignition.config.data.encoding' }}" 
+      - key:   "{{ 'guestinfo.ignition.config.data.encoding_disabled' if hosts_defaults.install_method == 'netinstall' else 'guestinfo.ignition.config.data.encoding' }}" 
         value: base64
 
       # Values always needed  
@@ -225,7 +228,7 @@
 - name: When we need to use iPXE or grub we should boot from cdrom the first time
   tags: vm
   loop: "{{ vm_hosts }}"
-  when: hosts_defaults.install_method != 'template'
+  when: hosts_defaults.install_method != 'netinstall'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -244,6 +247,7 @@
   register: vm_boot_order
 
 - name: Power on Machines
+
   tags: vm
   loop: "{{ vm_hosts }}"
   vmware_guest:
@@ -252,7 +256,7 @@
     password: "{{ vcenter.password }}"
     validate_certs: "{{ vcenter.validate_certs }}"
     name: "{{ item.vmname | default(item.hostname) }}"
-    state: poweredon
+    state: "{{ocp_vm_power_state}}"
     datacenter: "{{ vcenter.datacenter }}"
   delegate_to: localhost
   register: deploy  
@@ -260,7 +264,7 @@
 - name: Now we can revert to disk as we should have correctly booted and written on disk
   tags: vm
   loop: "{{ vm_hosts }}"
-  when: hosts_defaults.install_method != 'template'
+  when: hosts_defaults.install_method != 'netinstall'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"

@@ -1,32 +1,33 @@
 # ansible-configured
 ---
-ocp_vm_cleanup: false               # Cleanup Mode. Use with caution I don't request confirmation
-ocp_vm_cleanup_preserve_vm: False   # Preserver VMs when Clenup mode is engaged.
-ocp_vm_cleanup_preserve_tmp: False  # Preserver tmp folder when Clenup mode is engaged.
-ocp_vm_cleanup_preserve_iso: False  # Preserver iso in datastore when Clenup mode is engaged.
-ocp_vm_check_conf: True             # Enable/Disable this portion of role
-ocp_vm_check_env: True              # Enable/Disable this portion of role
-ocp_vm_create_webserver: True       # Enable/Disable this portion of role
-ocp_vm_create_haproxy: True         # Enable/Disable this portion of role
-ocp_vm_create_ipxe: True            # Enable/Disable this portion of role
-ocp_vm_create_grub: True            # Enable/Disable this portion of role
-ocp_vm_prepare_installer: True      # Enable/Disable this portion of role
-ocp_vm_transpile: True              # Enable/Disable this portion of role
-ocp_vm_create_vm: True              # Enable/Disable this portion of role
-ocp_vm_install_client: True         # Enable/Disable this portion of role
-enable_reservation: True            # For production environment you should enavle this
-cpu_biggest: 0                      # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
-dns_fail_is_not_fatal: False        # Ignore all DNS checks (You should nod ignore this kind of errors)
-ptr_fail_is_not_fatal: True         # Using iPXE PTR should not be a problem.
-checks_only: False                  # Do the Checks and exit
-ipxe_template: ipxe.cfg.j2          # Useful for Customize your Menu (I.E. adding https://netboot.xyz/)
+ocp_vm_cleanup: false                # Cleanup Mode. Use with caution I don't request confirmation
+ocp_vm_cleanup_preserve_vm: False    # Preserve VMs when Clenup mode is engaged.
+ocp_vm_cleanup_preserve_tmp: False   # Preserve tmp folder when Clenup mode is engaged.
+ocp_vm_cleanup_preserve_iso: False   # Preserve iso in datastore when Clenup mode is engaged.
+ocp_vm_cleanup_preserve_nginx: False # Preserve the content of /usr/share/nginx/html
+ocp_vm_check_conf: True              # Enable/Disable this portion of role
+ocp_vm_check_env: True               # Enable/Disable this portion of role
+ocp_vm_create_webserver: True        # Enable/Disable this portion of role
+ocp_vm_create_haproxy: True          # Enable/Disable this portion of role
+ocp_vm_create_ipxe: True             # Enable/Disable this portion of role
+ocp_vm_create_grub: True             # Enable/Disable this portion of role
+ocp_vm_prepare_installer: True       # Enable/Disable this portion of role
+ocp_vm_transpile: True               # Enable/Disable this portion of role
+ocp_vm_create_vm: True               # Enable/Disable this portion of role
+ocp_vm_install_client: True          # Enable/Disable this portion of role
+ocp_vm_power_state: poweredon
+enable_reservation: True             # For production environment you should enavle this
+cpu_biggest: 0                       # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
+dns_fail_is_not_fatal: False         # Ignore all DNS checks (You should nod ignore this kind of errors)
+ptr_fail_is_not_fatal: True          # Using iPXE PTR should not be a problem.
+checks_only: False                   # Do the Checks and exit
+ipxe_template: ipxe.cfg.j2           # Useful for Customize your Menu (I.E. adding https://netboot.xyz/)
 grub_outformat: i386-pc-pxe
 grub_modules: >-
   all_video
   biosdisk
   blscfg
   boot
-  btrfs
   bufio
   cat
   cbfs
@@ -38,7 +39,6 @@ grub_modules: >-
   echo
   ext2
   extcmd
-  fat
   font
   fshelp
   gcry_crc
@@ -47,7 +47,6 @@ grub_modules: >-
   gfxterm
   gzio
   halt
-  hfsplus
   http
   iso9660
   jpeg
@@ -56,17 +55,12 @@ grub_modules: >-
   ls
   lspci
   lvm
-  mdraid09
-  mdraid1x
   minicmd
   nativedisk
   net
   normal
-  part_apple
   part_gpt
   part_msdos
-  password_pbkdf2
-  png
   priority_queue
   probe
   pxe
@@ -77,7 +71,6 @@ grub_modules: >-
   search_fs_file
   search_fs_uuid
   search_label
-  serial
   sleep
   syslinuxcfg
   terminal
@@ -104,21 +97,22 @@ ocp_installer:
   # You should find everything you need around there: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
   kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
   initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
-  rhcosimage: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
+  coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
   installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
   clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+  install_type: rhcos # fedoracos | rhcos
 
 hosts_defaults:
   # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
   # install_method: netinstall
   install_method: template # [ netinstall | template | grub ]
   # install_method: netinstall
-  install_type: fedoracos # fedoracos | rhcos
   template: "rhcos-4.4.3-x86_64-vmware.x86_64"
   iso: "pxe.iso"                
   # Network configuration
   network:
     name: MyNetWork
+    # interface: (this value changes based on the OS in a dynamic way. Specifiy it only if you know what are you doing.)
     mask: 255.255.255.0
     gw: 192.168.0.1
     dns:  # Max 3

@@ -16,8 +16,8 @@ item --gap --             Hostname: ${hostname}
 item --gap --             Interface: ${net_interface}
 item --gap --             DNS: {%- for dns in hosts_defaults.network.dns %} ${dns{{loop.index }}} {%- endfor %} 
 item --gap --             install_dev: ${disk} 
-item --gap --             image_url: ${fileserver}/${rhcos-image} 
-item --gap --             ignition_url: ${fileserver}/${ignition}
+item --gap --             image_url: ${fileserver}/${coreos-image} 
+item --gap --             IGN: ${fileserver}/${node_type}.ign
 item --gap --             grub.cfg: ${fileserver}/${hostname}/core.0
 item --gap --             ------------------------- Install Options ----------------------
 item --key n netinstall   Install CoreOS via Netinstall
@@ -37,10 +37,10 @@ goto ${selected}
 
 :netinstall
 ifopen net0
-kernel ${fileserver}/${kernel-installer} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0  coreos.inst.insecure coreos.inst.platform_id=metal coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${rhcos-image} coreos.inst.ignition_url=${fileserver}/${ignition} ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none:
+kernel ${fileserver}/${kernel-installer} rd.neednet=1 initrd=${fileserver}/${initrd-installer} console=tty0 console=ttyS0 coreos.inst.platform_id=metal coreos.inst=yes coreos.inst.install_dev=${disk} coreos.inst.image_url=${fileserver}/${coreos-image} coreos.inst.ignition_url=${fileserver}/${node_type}.ign ip=${net0/ip}::${net0/gateway}:${net0/netmask}:${hostname}:${net_interface}:none:
 {%- for dns in item.network.dns | default(hosts_defaults.network.dns) %}
 {{dns}}{%- if loop.index < loop.length %}:{%- endif %}
-{%- endfor %}
+{%- endfor %}{% for dns in item.network.dns | default(hosts_defaults.network.dns) %} nameserver={{dns}} {% endfor %}
 
 initrd ${fileserver}/${initrd-installer}
 boot || goto failed

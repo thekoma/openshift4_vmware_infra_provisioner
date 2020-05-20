@@ -17,27 +17,26 @@
     - (vm_hosts | selectattr("type", "equalto", "worker") | list | count) < 1
 
 
+- name: Set eventual interface value
+  set_fact:
+    os_interface: "{{ 'eth0' if ocp_installer.install_type == 'fedoracos' else 'ens192'}}"
+
+
 - name: Fail if not filled the network variables
   fail:
     msg: 
-      - "Check your variables, you need a Network a nermask a gateway and at least one dns"
+      - "Check your variables, you need a Network a net mask a gateway and at least one dns"
   when: 
     - hosts_defaults.network.name is undefined
     - hosts_defaults.network.mask is undefined
     - hosts_defaults.network.gw is undefined
     - hosts_defaults.network.dns[0] is undefined
 
-# - name: Check how many servers are in group webserver
-#   fail:
-#     msg: 
-#       - "You Should have at least one webserver."
-#   when: 
-#     - groups.webserver| list | count == 0
-
-
 # Pause to get some sensitive input.
-- name: I need at least one webserver
-  when: groups.webserver| list | count == 0
+- name: I need at least one webserver in template grub or netinstall mode
+  when: 
+    - groups.webserver| list | count == 0
+    - hosts_defaults.install_method != 'template'
   block:
     - name: Prompt for a choise
       pause:

@@ -22,7 +22,7 @@ function load_video {
     insmod vbe
     insmod vga
     insmod video_bochs
-    insmod video_cirrus
+    insmod video_cirrus   
   fi
 }
 
@@ -35,11 +35,10 @@ fi
 
 set ignition_firstboot="CUSTOM_CONFIG_IN_EFFECT"
 if [ -f "/ignition.firstboot" ]; then
-
-    set ignition_network_kcmdline='CUSTOM_CONFIG_IN_EFFECT rd.neednet=1 ip={{ item.network.ip }}::{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}:{{ item.network.mask |  default(hosts_defaults['network']['mask']) }}:{{ item.hostname }}:{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default('ens192') }}:none:
+    set ignition_network_kcmdline='CUSTOM_CONFIG_IN_EFFECT rd.neednet=1 ip={{ item.network.ip }}::{{ item.network.gw |  default(hosts_defaults['network']['gw']) }}:{{ item.network.mask |  default(hosts_defaults['network']['mask']) }}:{{ item.hostname }}:{{ item.network.interface |  default(hosts_defaults['network']['interface']) | default(os_interface) }}:none:
 {%- for dns in item.network.dns | default(hosts_defaults.network.dns) %}
 {{dns}}{%- if loop.index < loop.length %}:{%- endif %}
-{%- endfor %}'
+{%- endfor %}{% for dns in item.network.dns | default(hosts_defaults.network.dns) %} nameserver={{dns}} {% endfor %}'
     source "/ignition.firstboot"
     set ignition_firstboot="ignition.firstboot ${ignition_network_kcmdline}"
 fi
