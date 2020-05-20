@@ -16,7 +16,7 @@ Not Working | Working| Not Tested
 [1]: See bug 4.4.3 netinstall
 ## OKD
 | Method  	|   31.20200420.3 (4.4)	|  
-|:-:	|:-:	|:-:	|:-:	
+|:-:	|:-:	
 |  GRUB 	|  ✅ 	
 |  Netinstall 	|   ✅	
 |  Template 	|  ✅  	
