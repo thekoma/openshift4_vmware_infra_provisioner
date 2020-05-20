@@ -16,7 +16,7 @@
 
 - name: Create Directory in Datastore to host iPXE
   when: 
-    - hosts_defaults.install_method != 'template'
+    - ocp_installer.install_method != 'template'
     - ocp_vm_create_ipxe
   vsphere_file:
     hostname: "{{ vcenter.host }}"
@@ -30,9 +30,9 @@
   delegate_to: localhost
   ignore_errors: yes
 
-- name: "Query a ipxe iso file on a datastore {{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
+- name: "Query a ipxe iso file on a datastore {{ ocp_installer.clustername }}/{{ ocp_installer.iso_datastore_name| default('ipxe_okd_ocp.iso') }}"
   when: 
-    - hosts_defaults.install_method != 'template'
+    - ocp_installer.install_method != 'template'
     - ocp_vm_create_ipxe
   vsphere_file:
     hostname: "{{ vcenter.host }}"
@@ -41,7 +41,7 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"      
-    path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
+    path: "{{ ocp_installer.clustername }}/{{ ocp_installer.iso_datastore_name| default('ipxe_okd_ocp.iso') }}"
     state: file
   delegate_to: localhost
   ignore_errors: yes
@@ -51,7 +51,7 @@
   when: 
     - ipxe_inuse.state|default('present') == 'absent'
     - ocp_vm_create_ipxe
-    - hosts_defaults.install_method != 'template'
+    - ocp_installer.install_method != 'template'
   vsphere_copy:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -60,7 +60,7 @@
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"
     src: "{{playbook_dir}}/tmp/iso/coreos_ipxe.iso"
-    path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
+    path: "{{ ocp_installer.clustername }}/{{ ocp_installer.iso_datastore_name| default('ipxe_okd_ocp.iso') }}"
   delegate_to: localhost
 
 - name: "Create a VM folder ({{ vcenter.folder }}) on datacenter {{ vcenter.datacenter }}"
@@ -117,7 +117,7 @@
     name: "{{ item.vmname | default(item.hostname) }}"
     state: present
     datacenter: "{{ vcenter.datacenter }}"
-    template: "{{ omit if hosts_defaults.install_method == 'netinstall' else hosts_defaults.template }}"
+    template: "{{ omit if ocp_installer.install_method == 'netinstall' else ocp_installer.template }}"
     guest_id: "{{ item.guest_id | default(hosts_defaults[item.type]['guest_id']) }}"
     disk:
       - size_gb: "{{ item.disk | default(hosts_defaults[item.type]['disk']) }}"
@@ -134,8 +134,8 @@
       cpu_reservation: "{{ '0' if not enable_reservation else (vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']))) }}"
 
     cdrom:
-      type:     "{{ 'none' if hosts_defaults.install_method == 'template' else 'iso' }}"
-      iso_path: "{{ omit if hosts_defaults.install_method == 'template' else item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + hosts_defaults.iso) }}"
+      type:     "{{ 'none' if ocp_installer.install_method == 'template' else 'iso' }}"
+      iso_path: "{{ omit if ocp_installer.install_method == 'template' else item.iso | default('[' + vcenter.datastore + ']' + ocp_installer.clustername + '/' + ocp_installer.iso_datastore_name| default('ipxe_okd_ocp.iso')) }}"
 
     customvalues:
 
@@ -189,13 +189,13 @@
         
 
       - key:   guestinfo.ipxe.disk
-        value: "{{item.disk | default(hosts_defaults.disk) | default('/dev/sda') }}"
+        value: "{{item.disk | default(hosts_defaults.disk_device_name) | default('sda') }}"
         
       - key:   guestinfo.ipxe.net_interface
         value: "{{item.network.interface | default(hosts_defaults['network']['interface']) | default(os_interface)}}"
         
       - key:   guestinfo.ipxe.menu_default
-        value: "{{item.install_method | default(hosts_defaults.install_method)}}"
+        value: "{{item.install_method | default(ocp_installer.install_method)}}"
         
       - key:   guestinfo.ipxe.node_type
         value: "{{item.type}}"
@@ -203,10 +203,10 @@
 
 
       # # Values needed for Template or Grub mode
-      - key:   "{{ 'guestinfo.ignition.config.data_disabled' if hosts_defaults.install_method == 'netinstall' else 'guestinfo.ignition.config.data' }}" 
+      - key:   "{{ 'guestinfo.ignition.config.data_disabled' if ocp_installer.install_method == 'netinstall' else 'guestinfo.ignition.config.data' }}" 
         value: "{{item.ignition | default(ign[item.hostname]) | default(ign[item.type])}}"
 
-      - key:   "{{ 'guestinfo.ignition.config.data.encoding_disabled' if hosts_defaults.install_method == 'netinstall' else 'guestinfo.ignition.config.data.encoding' }}" 
+      - key:   "{{ 'guestinfo.ignition.config.data.encoding_disabled' if ocp_installer.install_method == 'netinstall' else 'guestinfo.ignition.config.data.encoding' }}" 
         value: base64
 
       # Values always needed  
@@ -228,7 +228,7 @@
 - name: When we need to use iPXE or grub we should boot from cdrom the first time
   tags: vm
   loop: "{{ vm_hosts }}"
-  when: hosts_defaults.install_method != 'netinstall'
+  when: ocp_installer.install_method != 'netinstall'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"
@@ -264,7 +264,7 @@
 - name: Now we can revert to disk as we should have correctly booted and written on disk
   tags: vm
   loop: "{{ vm_hosts }}"
-  when: hosts_defaults.install_method != 'netinstall'
+  when: ocp_installer.install_method != 'netinstall'
   vmware_guest_boot_manager:
     hostname: "{{ vcenter.host }}"
     username: "{{ vcenter.user }}"

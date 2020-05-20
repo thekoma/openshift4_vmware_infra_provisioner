@@ -25,7 +25,7 @@
     validate_certs: "{{ vcenter.validate_certs }}"
     datacenter: "{{ vcenter.datacenter }}"
     datastore:  "{{ vcenter.datastore }}"      
-    path: "{{ ocp_installer.clustername }}/{{ hosts_defaults.iso }}"
+    path: "{{ ocp_installer.clustername }}/{{ ocp_installer.iso_datastore_name | default('ipxe_okd_ocp.iso') }}"
     state: absent
   delegate_to: localhost
   ignore_errors: yes

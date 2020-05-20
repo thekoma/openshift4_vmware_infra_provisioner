@@ -13,7 +13,7 @@
 
 - name: Prepare WebServer
   when: 
-    - hosts_defaults.install_method != 'template'
+    - ocp_installer.install_method != 'template'
     - not checks_only|bool
     - not ocp_vm_cleanup|bool
     - ocp_vm_create_webserver
@@ -37,7 +37,7 @@
 
 - name: Create PXE Image
   when: 
-    - hosts_defaults.install_method != 'template'
+    - ocp_installer.install_method != 'template'
     - not checks_only|bool
     - not ocp_vm_cleanup|bool
     - ocp_vm_create_ipxe
@@ -49,7 +49,7 @@
 
 - name: Create Grub Loaders
   when: 
-    - hosts_defaults.install_method == 'grub'
+    - ocp_installer.install_method == 'grub'
     - not checks_only|bool
     - not ocp_vm_cleanup|bool
     - ocp_vm_create_grub
@@ -70,7 +70,7 @@
 
 - name: transpile ignition
   when: 
-    - hosts_defaults.install_method == 'template'
+    - ocp_installer.install_method == 'template'
     - not ocp_vm_cleanup|bool
     - not checks_only|bool
     - ocp_vm_transpile|bool
