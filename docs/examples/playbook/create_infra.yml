@@ -1,0 +1,5 @@
+---
+- hosts: all
+  remote_user: root
+  roles:
+  - openshift4_vmware_infra_provisioner

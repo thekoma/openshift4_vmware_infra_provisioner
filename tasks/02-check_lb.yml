@@ -1,0 +1,22 @@
+#ansible-configured
+
+- name: Check that the load balancer ports are open
+  wait_for:
+    host: '{{ item.host }}'
+    port: '{{ item.port }}'
+    connect_timeout: 1
+    timeout: 1
+  ignore_errors: "{{lb_fail_is_not_fatal}}"
+  with_items:
+    - host: "api.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}}"
+      port: 6443
+    - host: "api.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}}"
+      port: 22623
+    - host: "api-int.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}}"
+      port: 6443
+    - host: "api-int.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}}"
+      port: 22623
+    - host: "myapp.apps.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}}"
+      port: 443
+    - host: "myapp.apps.{{ocp_installer.clustername}}.{{ocp_installer.basedomain}}"
+      port: 80
