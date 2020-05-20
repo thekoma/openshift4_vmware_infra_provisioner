@@ -1,0 +1,42 @@
+# I put there the common configuration just in case
+versions:
+  okd:
+    4.4.0.b4:
+        notes: OKD Stable (4.4.0.b4)
+        kernel: https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200420.3.0/x86_64/fedora-coreos-31.20200420.3.0-live-kernel-x86_64
+        initrd: https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200420.3.0/x86_64/fedora-coreos-31.20200420.3.0-live-initramfs.x86_64.img
+        coreos_image: https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200420.3.0/x86_64/fedora-coreos-31.20200420.3.0-metal.x86_64.raw.xz
+        clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+        installer: https://github.com/openshift/okd/releases/download/4.4.0-0.okd-2020-04-21-163702-beta4/openshift-install-linux-4.4.0-0.okd-2020-04-21-163702-beta4.tar.gz
+        install_type: fedoracos
+  ocp:
+
+    4.3.8:
+      notes: OCP 4.3.8
+      kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/latest/rhcos-4.3.8-x86_64-installer-kernel-x86_64
+      initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/latest/rhcos-4.3.8-x86_64-installer-initramfs.x86_64.img
+      coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/latest/rhcos-4.3.8-x86_64-metal.x86_64.raw.gz
+      clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+      installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
+      coreos_sha256: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/latest/sha256sum.txt
+      install_type: rhcos
+
+    4.4.3:
+      notes: OCP 4.4.3
+      kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
+      initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
+      coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
+      clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+      installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
+      coreos_sha256: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.4/latest/sha256sum.txt
+      install_type: rhcos
+        
+    4.5.0_nightly:
+      notes: OCP 4.5.0 Nightly
+      kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.0-0.nightly-2020-03-18-115438-x86_64-installer-kernel-x86_64
+      initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.0-0.nightly-2020-03-18-115438-x86_64-installer-initramfs.x86_64.img
+      coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.0-0.nightly-2020-03-18-115438-x86_64-metal.x86_64.raw.gz
+      clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+      installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
+      coreos_sha256: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/sha256sum.txt
+      install_type: rhcos

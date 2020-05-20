@@ -3,7 +3,7 @@
 The disk for RHCOS should always be stripped of the /dev/ part.
 As RedHat is working toward the new installer (the one that FCOS is already using) it will automatically understand the /dev/ pormat (and hopefully support scsi and md device with strange names.)
 Variable: 
-- `hosts_defaults.disk`
+- `hosts_defaults.disk_device_name`
 
 Default Value: 
 - `sda`

@@ -1,5 +1,133 @@
 # ansible-configured
 ---
+
+enable_reservation: True             # For production environment you should enable this
+cpu_biggest: 0                       # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
+
+vcenter:
+  host: vcenter.vsphere.local       # vcenter's hostname
+  user: administrator@vsphere.local # vcenter's username
+  password: password                # vcenter's password
+  datacenter: datacenter01          # datacenter to use
+  folder: OKD                      # Where to place VM in vcenter
+  validate_certs: no                # Validate vcenter's certificate
+  datastore: "datastore01"          # Where to create VM
+
+ocp_installer:
+  basedomain: lab.local             # Base domain
+  clustername: okd01                # The cluster name (prepend on basedomain)
+  pullsecret: FILLME                # Pull secret from https://cloud.openshift.com
+  sshkey: FILLME                    # SSH Key to be installed to login with user core on machines
+  # You should find everything you need around there: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
+  # Those values are for netinstall only
+  # kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
+  # initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
+  # coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
+  installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
+  clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+  template: "rhcos-4.4.3-x86_64-vmware.x86_64" 
+  install_type: rhcos # fedoracos | rhcos
+  install_method: grub # [ netinstall | template | grub ]
+  # iso_datastore_name:  "ocp_pxe.iso" # defaults to 'ipxe_okd_ocp.iso'
+  
+hosts_defaults:
+
+  # Network configuration
+  network:
+    name: MyNetWork
+    # interface: (this value changes based on the OS in a dynamic way. Specifiy it only if you know what are you doing.)
+    mask: 255.255.255.0
+    gw: 192.168.0.1
+    dns:  # Max 3
+        - 192.168.0.2
+        - 192.168.0.3
+
+  # Kind of nodes. Those are the default values so that you shouldn't have to
+  # repeat them for every node. But you can override them. All those values are Required.
+  generic:
+    nested_virt: False
+    memory_mb: 16384
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    disk: 120
+    guest_id: other4xLinux64Guest
+    ignition: none
+  master:
+    nested_virt: True
+    memory_mb: 16384
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    disk: 120
+    guest_id: coreos64Guest
+    ignition: master.ign
+  bootstrap:
+    nested_virt: False
+    memory_mb: 16384
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    disk: 120
+    guest_id: coreos64Guest
+    ignition: bootstrap.ign
+  worker:
+    nested_virt: True
+    memory_mb: 8192
+    num_cpus: 4
+    num_cpu_cores_per_socket: 1
+    mem_limit: 8192
+    disk: 120
+    guest_id: coreos64Guest
+    ignition: worker.ign
+
+vm_hosts:
+    # Enumerate all your hosts here
+    - hostname: master1.ocp.okd01.lab.local # Required
+      nested_virt: True                     # Optional
+      num_cpus: 4                           # Optional
+      num_cpu_cores_per_socket: 1           # Optional
+      memory_mb: 16384                      # Optional
+      vmname: master1                       # Optional
+      type: master                          # Required
+      annotation: 'First node'              # Optional
+      network:
+          ip: 192.168.168.180               # Required
+          name: MyNetWork                   # Optional
+          mask: 255.255.255.0               # Optional
+          gw: 192.168.0.1                   # Optional
+          dns:                              # Optional
+              - 192.168.0.2                 # Optional
+              - 192.168.0.3                 # Optional
+    - hostname: master2.ocp.okd01.lab.local
+      type: master
+      network:
+          ip: 192.168.168.181
+    - hostname: master3.ocp.okd01.lab.local
+      type: master
+      network:
+          ip: 192.168.168.182
+    - hostname: worker1.ocp.okd01.lab.local
+      type: worker
+      network:
+          ip: 192.168.168.183
+    - hostname: worker2.ocp.okd01.lab.local
+      type: worker
+      network:
+          ip: 192.168.168.184
+    - hostname: worker3.ocp.okd01.lab.local
+      type: worker
+      network:
+          ip: 192.168.168.185
+    - hostname: bootstrap.ocp.okd01.lab.local
+      type: bootstrap
+      network:
+          ip: 192.168.168.187
+    - hostname: bootstrap.ocp.okd01.lab.local
+      type: generic
+      network:
+          ip: 192.168.168.188
+
+# You normally don't need to set those variables at all but 
+# I still want to make them oeveridable by role import so i place them there.
+
 ocp_vm_cleanup: false                # Cleanup Mode. Use with caution I don't request confirmation
 ocp_vm_cleanup_preserve_vm: False    # Preserve VMs when Clenup mode is engaged.
 ocp_vm_cleanup_preserve_tmp: False   # Preserve tmp folder when Clenup mode is engaged.
@@ -16,12 +144,13 @@ ocp_vm_transpile: True               # Enable/Disable this portion of role
 ocp_vm_create_vm: True               # Enable/Disable this portion of role
 ocp_vm_install_client: True          # Enable/Disable this portion of role
 ocp_vm_power_state: poweredon
-enable_reservation: True             # For production environment you should enavle this
-cpu_biggest: 0                       # Set this value to che amount of Mhz per CPU to be reserved (i'll make the math for you)
 dns_fail_is_not_fatal: False         # Ignore all DNS checks (You should nod ignore this kind of errors)
 ptr_fail_is_not_fatal: True          # Using iPXE PTR should not be a problem.
+
 checks_only: False                   # Do the Checks and exit
+
 ipxe_template: ipxe.cfg.j2           # Useful for Customize your Menu (I.E. adding https://netboot.xyz/)
+
 grub_outformat: i386-pc-pxe
 grub_modules: >-
   all_video
@@ -79,123 +208,3 @@ grub_modules: >-
   tftp
   video
   xfs
-
-vcenter:
-  host: vcenter.vsphere.local       # vcenter's hostname
-  user: administrator@vsphere.local # vcenter's username
-  password: password                # vcenter's password
-  datacenter: datacenter01          # datacenter to use
-  folder: OKD                      # Where to place VM in vcenter
-  validate_certs: no                # Validate vcenter's certificate
-  datastore: "datastore01"          # Where to create VM
-
-ocp_installer:
-  basedomain: lab.local             # Base domain
-  clustername: okd01                # The cluster name (prepend on basedomain)
-  pullsecret: FILLME                # Pull secret from https://cloud.openshift.com
-  sshkey: FILLME                    # SSH Key to be installed to login with user core on machines
-  # You should find everything you need around there: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
-  kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
-  initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
-  coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
-  installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
-  clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-  install_type: rhcos # fedoracos | rhcos
-
-hosts_defaults:
-  # The name of the ISO file (it will be pushed in the vcenter.datacenter in a path with the same name of the cluster)
-  # install_method: netinstall
-  install_method: grub # [ netinstall | template | grub ]
-  # install_method: netinstall
-  template: "rhcos-4.4.3-x86_64-vmware.x86_64"
-  iso: "pxe.iso"                
-  # Network configuration
-  network:
-    name: MyNetWork
-    # interface: (this value changes based on the OS in a dynamic way. Specifiy it only if you know what are you doing.)
-    mask: 255.255.255.0
-    gw: 192.168.0.1
-    dns:  # Max 3
-        - 192.168.0.2
-        - 192.168.0.3
-  # Kind of nodes. Those are the default values so that you shouldn't have to
-  # repeat them for every node. But you can override them. All those values are Required.
-  generic:
-    nested_virt: False
-    memory_mb: 16384
-    num_cpus: 4
-    num_cpu_cores_per_socket: 1
-    disk: 120
-    guest_id: other4xLinux64Guest
-    ignition: none
-  master:
-    nested_virt: True
-    memory_mb: 16384
-    num_cpus: 4
-    num_cpu_cores_per_socket: 1
-    disk: 120
-    guest_id: coreos64Guest
-    ignition: master.ign
-  bootstrap:
-    nested_virt: False
-    memory_mb: 16384
-    num_cpus: 4
-    num_cpu_cores_per_socket: 1
-    disk: 120
-    guest_id: coreos64Guest
-    ignition: bootstrap.ign
-  worker:
-    nested_virt: True
-    memory_mb: 8192
-    num_cpus: 4
-    num_cpu_cores_per_socket: 1
-    mem_limit: 8192
-    disk: 120
-    guest_id: coreos64Guest
-    ignition: worker.ign
-
-vm_hosts:
-    - hostname: master1.ocp.okd01.lab.local # Required
-      nested_virt: True                     # Optional
-      num_cpus: 4                           # Optional
-      num_cpu_cores_per_socket: 1           # Optional
-      memory_mb: 16384                      # Optional
-      vmname: master1                       # Optional
-      type: master                          # Required
-      annotation: 'First node'              # Optional
-      network:
-          ip: 192.168.168.180               # Required
-          name: MyNetWork                   # Optional
-          mask: 255.255.255.0               # Optional
-          gw: 192.168.0.1                   # Optional
-          dns:                              # Optional
-              - 192.168.0.2                 # Optional
-              - 192.168.0.3                 # Optional
-    - hostname: master2.ocp.okd01.lab.local
-      type: master
-      network:
-          ip: 192.168.168.181
-    - hostname: master3.ocp.okd01.lab.local
-      type: master
-      network:
-          ip: 192.168.168.182
-    - hostname: worker1.ocp.okd01.lab.local
-      type: worker
-      network:
-          ip: 192.168.168.183
-    - hostname: worker2.ocp.okd01.lab.local
-      type: worker
-      network:
-          ip: 192.168.168.184
-    - hostname: worker3.ocp.okd01.lab.local
-      type: worker
-      network:
-          ip: 192.168.168.185
-    - hostname: bootstrap.ocp.okd01.lab.local
-      type: bootstrap
-      network:
-          ip: 192.168.168.187
-    - hostname: bootstrap.ocp.okd01.lab.local
-      type: generic
-      network:
-          ip: 192.168.168.188

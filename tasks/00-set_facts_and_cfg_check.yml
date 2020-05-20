@@ -36,7 +36,7 @@
 - name: I need at least one webserver in template grub or netinstall mode
   when: 
     - groups.webserver| list | count == 0
-    - hosts_defaults.install_method != 'template'
+    - ocp_installer.install_method != 'template'
   block:
     - name: Prompt for a choise
       pause:
