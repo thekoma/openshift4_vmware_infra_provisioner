@@ -31,7 +31,7 @@ ocp_installer:
   # iso_datastore_name:  "ocp_pxe.iso" # defaults to 'ipxe_okd_ocp.iso'
   
 hosts_defaults:
-
+  # disk_device_name: # defaults to 'sda'   
   # Network configuration
   network:
     name: MyNetWork
