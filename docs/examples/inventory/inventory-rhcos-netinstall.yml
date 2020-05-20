@@ -1,0 +1,121 @@
+# ansible-configured
+---
+    # defaults file for ocp_vm
+    haproxy:
+      hosts:
+        bastion.ocp.mydomain.local
+    webserver:
+      hosts:
+        bastion.ocp.mydomain.local
+    all:
+        vars:
+          
+          enable_reservation: False # Don't want to reserve CPU for now
+          cpu_biggest: 2100 # 2.1GHZ
+
+          vcenter:
+            host: vcenter.mydomain.local
+            user: administrator@vsphere.local
+            password: 'FILLME'
+            datacenter: Datacenter01
+            folder: OCP
+            validate_certs: no
+            datastore: "DATASTORE"  
+            
+          ocp_installer:
+            basedomain: mydomain.local
+            clustername: ocp
+            pullsecret: 'FILLME'
+            sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+            install_type: rhcos # fedoracos | rhcos
+            kernel: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
+            initrd: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
+            coreos_image: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
+            clients: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+            installer: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux.tar.gz
+            coreos_sha256: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.4/latest/sha256sum.txt
+            install_method: netinstall
+
+          hosts_defaults:
+            network:
+              name: VM Network
+              mask: 255.255.255.0
+              gw: 192.168.0.1
+              dns:
+                - 192.168.0.2
+                - 192.168.1.2
+                - 192.168.1.3
+            generic:
+              memory_mb: 16384
+              num_cpus: 4
+              num_cpu_cores_per_socket: 1
+              mem_limit: 16384
+              mem_reservation: 0
+              disk: 120
+              memory_reservation_lock: False
+              guest_id: other4xLinux64Guest
+              ignition: none
+              nested_virt: True
+            master:
+              memory_mb: 16384
+              num_cpus: 4
+              num_cpu_cores_per_socket: 1
+              mem_limit: 16384
+              mem_reservation: 0
+              disk: 120
+              memory_reservation_lock: False
+              guest_id: coreos64Guest
+              ignition: master.ign
+              nested_virt: True
+    
+            bootstrap:
+              memory_mb: 16384
+              num_cpus: 4
+              num_cpu_cores_per_socket: 1
+              mem_limit: 16384
+              mem_reservation: 0
+              disk: 120
+              memory_reservation_lock: False
+              guest_id: coreos64Guest
+              ignition: bootstrap.ign
+              nested_virt: True
+    
+            worker:
+              memory_mb: 8192
+              num_cpus: 4
+              num_cpu_cores_per_socket: 1
+              mem_limit: 8192
+              mem_reservation: 0
+              disk: 120
+              memory_reservation_lock: False
+              guest_id: coreos64Guest
+              ignition: worker.ign
+              nested_virt: True
+    
+    
+    
+          vm_hosts:
+            - hostname: bootstrap.ocp.mydomain.local
+              annotation: bootstrap
+              type: bootstrap
+              network:
+                ip: 192.168.0.187
+            - hostname: master1.ocp.mydomain.local
+              type: master
+              network:
+                ip: 192.168.0.180
+            - hostname: master2.ocp.mydomain.local
+              type: master
+              network:
+                ip: 192.168.0.181
+            - hostname: master3.ocp.mydomain.local
+              type: master
+              network:
+                ip: 192.168.0.182
+            - hostname: worker1.ocp.mydomain.local
+              type: worker
+              network:
+                ip: 192.168.0.183
+
+    
+    
