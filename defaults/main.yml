@@ -145,7 +145,8 @@ ocp_vm_create_vm: True               # Enable/Disable this portion of role
 ocp_vm_install_client: True          # Enable/Disable this portion of role
 ocp_vm_power_state: poweredon
 dns_fail_is_not_fatal: False         # Ignore all DNS checks (You should nod ignore this kind of errors)
-ptr_fail_is_not_fatal: True          # Using iPXE PTR should not be a problem.
+ptr_fail_is_not_fatal: False          # Using iPXE PTR should not be a problem.
+lb_fail_is_not_fatal: False          # Using iPXE PTR should not be a problem.
 
 checks_only: False                   # Do the Checks and exit
 

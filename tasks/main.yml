@@ -9,7 +9,9 @@
   when: 
     - not ocp_vm_cleanup|bool
     - ocp_vm_check_env|bool
-  include_tasks:  01-check_dns.yml
+  block:
+    - include_tasks: 01-check_dns.yml
+    - include_tasks: 02-check_lb.yml
 
 - name: Prepare WebServer
   when: 
