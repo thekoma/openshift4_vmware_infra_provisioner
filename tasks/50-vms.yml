@@ -133,7 +133,7 @@
       num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']) }}"
       mem_reservation: "{{ '0' if not enable_reservation else (item.memory_mb | default(hosts_defaults[item.type]['memory_mb'])) }}"
       memory_reservation_lock: "{{ 'True' if enable_reservation else 'False' }}"
-      cpu_reservation: "{{ '0' if not enable_reservation else (vcenter.cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']))) }}"
+      cpu_reservation: "{{ '0' if not enable_reservation else (cpu_biggest * ( item.num_cpus | default(hosts_defaults[item.type]['num_cpus'])) * ( item.num_cpu_cores_per_socket | default(hosts_defaults[item.type]['num_cpu_cores_per_socket']))) }}"
 
     cdrom:
       type:     "{{ 'none' if ocp_installer.install_method == 'template' else 'iso' }}"
