@@ -1,5 +1,6 @@
 ---
 - name: Install Needed Packages
+  become: yes
   delegate_to: localhost
   yum:
     state: present

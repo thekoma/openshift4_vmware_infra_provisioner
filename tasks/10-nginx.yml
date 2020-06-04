@@ -1,16 +1,19 @@
 - name: Install Needed Packages
+  become: yes
   yum:
     state: present
     name:
      - nginx
 
 - name: Enable Firewalld
+  become: yes
   service:
     name: firewalld
     enabled: yes
     state: started
 
 - name: enable Ports on firewall
+  become: yes
   loop:
       - 8080/tcp
   firewalld:
@@ -20,6 +23,7 @@
       immediate: yes
 
 - name: Change Nginx Listen Port
+  become: yes
   lineinfile:
     path: "{{ item.file }}"
     regexp: "{{ item.regexp }}"
@@ -36,12 +40,14 @@
       file: '/etc/nginx/nginx.conf.default'
 
 - name: enable nginx
+  become: yes
   service:
     name: nginx
     state: restarted
     enabled: yes
 
 - name: Download bootstrap kernel for RHCOS netinstall
+  become: yes
   when: ocp_installer.install_method == 'netinstall'
   get_url:
     url: "{{ ocp_installer.kernel }}"
@@ -49,6 +55,7 @@
     checksum: "{{'sha256:' + ocp_installer.coreos_sha256 if ocp_installer.coreos_sha256 is defined else omit }}"
 
 - name: Download bootstrap kernel for RHCOS netinstall
+  become: yes
   when: ocp_installer.install_method == 'netinstall'
   file:
     dest: "/usr/share/nginx/html/kernel"
@@ -56,6 +63,7 @@
     state: link
 
 - name: Download bootstrap initrd for RHCOS netinstall
+  become: yes
   when: ocp_installer.install_method == 'netinstall'
   get_url:
     url: "{{ ocp_installer.initrd }}"
@@ -63,6 +71,7 @@
     checksum: "{{'sha256:' + ocp_installer.coreos_sha256 if ocp_installer.coreos_sha256 is defined else omit }}"
 
 - name: Download bootstrap initrd for RHCOS netinstall
+  become: yes
   when: ocp_installer.install_method == 'netinstall'
   file:
     dest: "/usr/share/nginx/html/initramfs.img"
@@ -70,6 +79,7 @@
     state: link
 
 - name: Download RHCOS image  netinstall
+  become: yes
   when: ocp_installer.install_method == 'netinstall'
   get_url:
     url: "{{ ocp_installer.coreos_image }}"
@@ -77,6 +87,7 @@
     checksum: "{{'sha256:' + ocp_installer.coreos_sha256 if ocp_installer.coreos_sha256 is defined else omit }}"
 
 - name: Download bootstrap coreos_image.raw.gz for RHCOS netinstall
+  become: yes
   when: ocp_installer.install_method == 'netinstall'
   file:
     dest: "/usr/share/nginx/html/coreos_image.raw.gz"
@@ -84,9 +95,13 @@
     state: link
 
 - name: Download FCOS image  netinstall signature
+  become: yes
   when: 
     - ocp_installer.install_method == 'netinstall'
     - ocp_installer.install_type == 'fedoracos'
   get_url:
     url: "{{ ocp_installer.coreos_image }}.sig"
     dest: /usr/share/nginx/html/coreos_image.raw.gz.sig
+
+
+

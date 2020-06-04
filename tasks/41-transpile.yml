@@ -2,6 +2,7 @@
 
 - name: Install Ansible's vmware_guest required libraryes
   delegate_to: localhost
+  become: yes
   yum:
     name: 
       - python3-requests
@@ -12,12 +13,14 @@
 
 - name: Fetch ipxe source filetranspiler
   delegate_to: localhost
+  become: no
   git:
     repo: https://github.com/ashcrow/filetranspiler
     dest: "{{playbook_dir}}/tmp/src/filetranspiler"
     force: yes
 
 - name: Cleanup first Create structure per machines
+  become: no
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   file:
@@ -26,6 +29,7 @@
   delegate_to: localhost
 
 - name: Create structure per machines
+  become: no
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   file:
@@ -35,6 +39,7 @@
   delegate_to: localhost
 
 - name: Create structure per machines
+  become: no
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   file:
@@ -45,6 +50,7 @@
   
 
 - name: Create Hostname
+  become: no
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   copy:
@@ -54,6 +60,7 @@
   delegate_to: localhost
 
 - name: Create Resolv
+  become: no
   when: ocp_installer.install_type != 'fedoracos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
@@ -64,6 +71,7 @@
   delegate_to: localhost
 
 - name: Create interface (old)
+  become: no
   when: ocp_installer.install_type != 'fedoracos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
@@ -74,6 +82,7 @@
   delegate_to: localhost
 
 - name: Create interface (new)
+  become: no
   when: ocp_installer.install_type != 'rhcos'
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
@@ -84,6 +93,7 @@
   delegate_to: localhost
 
 - name: Run transpiler
+  become: no
   tags: filetranspiler
   loop: "{{ vm_hosts }}"
   shell: >
@@ -96,3 +106,19 @@
 - set_fact:
     ign: "{{ ign | combine( { item.hostname: lookup('file', playbook_dir + '/tmp/' + item.hostname + '.ign')| string | b64encode } ) }}"
   loop: "{{ vm_hosts }}"
+
+- name: Copy files to Nginx Share
+  become: yes
+  when: 
+    - ocp_installer.install_method != 'template'
+    - not checks_only|bool
+    - not ocp_vm_cleanup|bool
+    - ocp_vm_create_webserver
+    - "'webserver' in group_names"
+  loop:
+    - bootstrap.ign
+    - master.ign
+    - worker.ign
+  copy:
+    src: "{{playbook_dir}}/tmp/cluster_conf/{{item}}"
+    dest: "/usr/share/nginx/html/{{item}}"

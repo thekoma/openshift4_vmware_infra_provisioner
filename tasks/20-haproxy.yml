@@ -1,4 +1,5 @@
 - name: Install Needed Packages
+  become: yes 
   yum:
     state: present
     name:
@@ -6,12 +7,14 @@
      - python3-libsemanage
 
 - name: Enable Firewalld
+  become: yes
   service:
     name: firewalld
     enabled: yes
     state: started
 
 - name: enable services on firewall
+  become: yes
   loop:
     - http
     - https
@@ -23,6 +26,7 @@
     immediate: yes
 
 - name: enable Ports on firewall
+  become: yes
   loop:
       - 6443/tcp
       - 9000/tcp
@@ -34,17 +38,20 @@
       immediate: yes
 
 - name: Prepare Configuration for HaProxy by Template
+  become: yes
   template:
     src: haproxy.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
 
 - name: Enable HaProxy to bind to any TCP
+  become: yes
   seboolean:
     name: haproxy_connect_any
     state: yes
     persistent: yes
 
 - name: enable haproxy
+  become: yes
   service:
     name: haproxy
     state: restarted

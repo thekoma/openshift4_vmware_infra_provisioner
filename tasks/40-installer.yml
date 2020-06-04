@@ -29,7 +29,8 @@
     path: "{{playbook_dir}}/tmp/downloads/ocp_installer.tgz"
 
 
-- name: Create ipxe config path
+- name: Create base config path
+  become: false
   delegate_to: localhost  
   loop:
     - "{{playbook_dir}}/tmp/downloads"
@@ -41,6 +42,7 @@
     recurse: yes
 
 - name: Download Installer
+  become: false
   delegate_to: localhost  
   when: not installer_tgz.stat.exists
   get_url:
@@ -48,6 +50,7 @@
     dest: "{{playbook_dir}}/tmp/downloads/ocp_installer.tgz"
 
 - name: "Extract {{playbook_dir}}/tmp/downloads/ocp_installer.tgz in {{playbook_dir}}/tmp/bin"
+  become: false
   delegate_to: localhost  
   when: not installer_bin.stat.exists
   unarchive:
@@ -55,6 +58,7 @@
     dest: "{{playbook_dir}}/tmp/bin"
 
 - name: Create configuration template
+  become: false
   delegate_to: localhost  
   when: not install_config.stat.exists
   loop:
@@ -65,11 +69,13 @@
     dest: "{{ item }}"
 
 - name: Create Manifests
+  become: false
   delegate_to: localhost  
   when: (not manifest_dir.stat.exists) and (not master_ign.stat.exists)
   shell: '{{playbook_dir}}/tmp/bin/openshift-install create manifests --dir="{{playbook_dir}}/tmp/cluster_conf"'
 
 - name: Ensure Masters not schedulable
+  become: false
   delegate_to: localhost  
   when: not master_ign.stat.exists
   lineinfile:
@@ -78,16 +84,8 @@
     line: '  mastersSchedulable: false'
 
 - name: Create Ignition
+  become: false
   delegate_to: localhost  
   when: not master_ign.stat.exists
   shell: '{{playbook_dir}}/tmp/bin/openshift-install create ignition-configs --dir="{{playbook_dir}}/tmp/cluster_conf"'
 
-- name: Copy files to Nginx Share
-  delegate_to: localhost  
-  loop:
-    - bootstrap.ign
-    - master.ign
-    - worker.ign
-  copy:
-    src: "{{playbook_dir}}/tmp/cluster_conf/{{item}}"
-    dest: "/usr/share/nginx/html/{{item}}"

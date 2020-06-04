@@ -2,6 +2,7 @@
 
 - name: Install Ansible's DNS required libraryes
   delegate_to: localhost
+  become: yes
   yum:
     name: 
       - python3-dns
@@ -72,6 +73,7 @@
       - "We should be able to resolve the WebServer"
   when: 
     - lookup('dig', hostvars[ groups['webserver'][0] ]['ansible_fqdn'] , 'qtype=A') == 'NXDOMAIN'
+    - ocp_installer.install_method != 'template'
   ignore_errors: "{{ 'Yes'|bool if dns_fail_is_not_fatal|bool else 'No' }}"
 
 

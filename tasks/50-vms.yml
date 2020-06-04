@@ -2,6 +2,7 @@
 ---
 - name: Install Ansible's vmware_guest required libraryes
   delegate_to: localhost
+  become: yes
   yum:
     name: 
       - python3-requests
@@ -9,6 +10,7 @@
     state: present
 
 - name: Install python non rpm packages
+  become: yes
   delegate_to: localhost
   pip:
     name: 
@@ -162,7 +164,7 @@
 
       # Set iPXE fileserver
       - key:   guestinfo.ipxe.fileserver
-        value: "http://{{hosts_defaults.webserver | default(hostvars[ groups.webserver[0] ]['ansible_fqdn'])}}:8080"
+        value: "http://{{ hostvars[ groups.webserver[0] ]['ansible_fqdn'] | default(hosts_defaults.webserver) |default('127.0.0.1')}}:8080"
 
       # Set DNS
       - key:   guestinfo.ipxe.dns
@@ -172,12 +174,11 @@
         value: "{{item.network.dns[0] | default(hosts_defaults.network.dns[0])}}"
 
       - key:   guestinfo.ipxe.dns2
-        value: "{{item.network.dns[1] | default(hosts_defaults.network.dns[1]) | default(omit)}}"
+        value: "{{item.network.dns[1] | default(hosts_defaults.network.dns[1]) | default(hosts_defaults.network.dns[0])}}"
 
       - key:   guestinfo.ipxe.dns3
-        value: "{{item.network.dns[2] | default(hosts_defaults.network.dns[2]) | default(omit)}}"
+        value: "{{item.network.dns[2] | default(hosts_defaults.network.dns[2]) | default(hosts_defaults.network.dns[0])}}"
 
-        
       - key:   guestinfo.ipxe.kernel-installer
         value: "{{item.kernelimg | default(hosts_defaults.kernelimg) | default('kernel')}}"
 
